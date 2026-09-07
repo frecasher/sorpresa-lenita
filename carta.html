@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Una Carta para Ti</title>
+  <style>
+    :root {
+      --azul-oscuro: #00296b;
+      --azul-medio: #003f88;
+      --azul-claro: #00509d;
+      --oro-oscuro: #fdc500;
+      --oro-claro: #ffd500;
+      --crema: #F8F9FA;
+      --verde-tallo: #556b2f;
+      --verde-hoja: #6b8e23;
+      --verde-pasto: #88b04b;
+    }
+
+    body {
+      margin: 0; overflow: hidden; height: 100vh;
+      background-color: var(--crema);
+      display: flex; justify-content: center; align-items: center;
+      font-family: 'Georgia', serif;
+      opacity: 0;
+      animation: aparecerPagina 1.5s ease forwards;
+    }
+    @keyframes aparecerPagina { to { opacity: 1; } }
+
+    /* --- ZONAS DE CLIC Y FLECHAS DORADAS --- */
+    .zona-clic {
+      position: fixed; top: 0; width: 50vw; height: 100vh; z-index: 25; cursor: pointer; pointer-events: none;
+    }
+    #zona-izq { left: 0; }
+    #zona-der { right: 0; }
+    
+    .flecha-dorada {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      color: var(--oro-oscuro); font-size: 3.5rem; text-shadow: 0 2px 15px rgba(253, 197, 0, 0.5);
+      z-index: 24; opacity: 0; transition: all 0.4s ease; pointer-events: none;
+    }
+    #flecha-izq { left: 40px; }
+    #flecha-der { right: 40px; }
+    
+    .flecha-dorada.mostrar { opacity: 0.5; }
+    .flecha-dorada.oculta { opacity: 0 !important; }
+    
+    /* Animación sutil al pasar el mouse por las mitades de la pantalla */
+    #zona-izq:hover ~ #flecha-izq:not(.oculta) { opacity: 1; transform: translateY(-50%) translateX(-10px); }
+    #zona-der:hover ~ #flecha-der:not(.oculta) { opacity: 1; transform: translateY(-50%) translateX(10px); }
+
+    .efecto-tunel {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 41, 107, 0.08) 100%);
+      pointer-events: none; z-index: 10;
+    }
+
+    /* --- CONTENEDOR CÁMARA --- */
+    #escenario-camara {
+      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+      transform: scale(1.1) translateY(3vh); 
+      transform-origin: bottom center;
+      transition: transform 5s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+    }
+    #escenario-camara.revelar-paisaje {
+      transform: scale(1) translateY(0);
+    }
+
+    /* --- CAPA 1: PAISAJE DE MONTAÑAS PROFUNDAS --- */
+    #paisaje-montanas {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 60%;
+      z-index: 2; pointer-events: none;
+    }
+    .montana {
+      position: absolute; bottom: -10%; border-radius: 50% 50% 0 0;
+    }
+    .m-atras { width: 140vw; height: 50vh; left: -20vw; background: rgba(0, 80, 157, 0.04); z-index: 1; }
+    .m-medio { width: 120vw; height: 35vh; left: 10vw; background: rgba(0, 80, 157, 0.07); z-index: 2; }
+    .m-frente { width: 150vw; height: 25vh; left: -25vw; background: rgba(0, 80, 157, 0.1); z-index: 3; }
+
+    /* --- CAPA 2: EL SOL --- */
+    #sol-contenedor {
+      position: absolute; bottom: -20vh; left: 10vw;
+      width: 250px; height: 250px;
+      transition: transform 1.5s ease, opacity 1.5s ease;
+      opacity: 0; z-index: 3;
+    }
+    #sol-atardecer {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: radial-gradient(circle, #fff 10%, var(--oro-claro) 60%, var(--oro-oscuro) 100%);
+      box-shadow: 0 0 60px var(--oro-oscuro), 0 0 120px var(--oro-claro);
+    }
+    @keyframes pulsoMagicoSol {
+      0% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.3); filter: brightness(1.4); box-shadow: 0 0 150px #fff, 0 0 250px var(--oro-oscuro); }
+      100% { transform: scale(1); filter: brightness(1.2); }
+    }
+
+    #overlay-atardecer {
+      position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+      background: radial-gradient(circle at center bottom, #FFE4B5 0%, transparent 80%);
+      opacity: 0; transition: opacity 1s ease; pointer-events: none; z-index: 3;
+    }
+
+    /* --- CAPA 3: NATURALEZA (CAMPO MASIVO) --- */
+    #elementos-naturaleza {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;
+    }
+    
+    .pasto-base {
+      position: absolute; bottom: 0; width: 3px; background: var(--verde-pasto);
+      transform-origin: bottom center; transform: scaleY(0); transition: transform 1.5s ease;
+      border-radius: 5px 5px 0 0;
+    }
+    
+    .planta-completa { position: absolute; bottom: 0; display: flex; justify-content: center; }
+    
+    .hoja-base {
+      position: absolute; bottom: -5px; width: 15px; height: 35px; background: var(--verde-hoja);
+      border-radius: 50%; transform-origin: bottom center; transform: scale(0); transition: transform 1.5s ease;
+      box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);
+    }
+
+    .tallo-alto {
+      position: absolute; bottom: 0; width: 4px; background: var(--verde-tallo);
+      transform-origin: bottom center; transform: scaleY(0); transition: transform 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .cluster-hortensia {
+      position: absolute; width: 2px; height: 2px;
+      transform: scale(0); transition: transform 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .flor-azul {
+      position: absolute; width: 22px; height: 22px;
+      background: var(--azul-claro); border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: inset -3px -3px 6px rgba(0, 41, 107, 0.6);
+    }
+    .flor-azul::after {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 5px; height: 5px; background: var(--oro-claro); border-radius: 50%;
+    }
+
+    /* Animaciones de Viento */
+    .anim-viento { animation: vientoFino 3s infinite alternate ease-in-out; }
+    .anim-viento-lento { animation: vientoFuerte 4.5s infinite alternate ease-in-out; }
+    @keyframes vientoFino { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+    @keyframes vientoFuerte { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+
+    /* --- CAPA 4: LA NIEBLA MISTERIOSA --- */
+    #capa-niebla {
+      position: absolute; bottom: 0; left: -50%; width: 200%; height: 60%;
+      background: linear-gradient(to top, var(--crema) 10%, rgba(248, 249, 250, 0.9) 50%, transparent 100%);
+      filter: blur(15px); z-index: 5; opacity: 1; 
+      animation: movimientoNiebla 25s infinite alternate linear;
+      transition: opacity 2.5s ease-in-out; pointer-events: none;
+    }
+    @keyframes movimientoNiebla {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(5vw); }
+    }
+
+    /* --- FONDOS CONTINUOS --- */
+    #fondo-vivo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 15; pointer-events: none; }
+    .petalo-cae {
+      position: absolute; top: -50px; width: 15px; height: 15px; background: var(--azul-claro);
+      border-radius: 0 50% 50% 50%; opacity: 0.4; animation: caerPetalo var(--duracion) infinite linear var(--delay);
+    }
+    @keyframes caerPetalo {
+      0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+      10% { opacity: 0.4; } 90% { opacity: 0.4; }
+      100% { transform: translateY(110vh) rotate(360deg) translateX(100px); opacity: 0; }
+    }
+    .luciernaga {
+      position: absolute; bottom: -20px; width: 6px; height: 6px; background: var(--oro-claro); border-radius: 50%;
+      box-shadow: 0 0 10px var(--oro-claro), 0 0 20px var(--oro-oscuro); animation: subirMagia var(--duracion) infinite ease-in-out var(--delay);
+    }
+    @keyframes subirMagia {
+      0% { transform: translateY(0) scale(0); opacity: 0; }
+      20% { opacity: 0.8; transform: translateY(-20vh) scale(1.5); }
+      80% { opacity: 0.8; transform: translateY(-80vh) scale(1); }
+      100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+    }
+
+    /* --- EL SOBRE Y LA CARTA --- */
+    #contenedor-sobre { position: absolute; z-index: 25; cursor: pointer; transition: transform 1s ease, opacity 0.8s ease; }
+    #contenedor-sobre:hover { transform: scale(1.05); }
+
+    .sobre { position: relative; width: 320px; height: 200px; background: var(--azul-medio); border-radius: 5px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+    .sobre::before { content: ''; position: absolute; top: 0; left: 0; border-left: 160px solid transparent; border-right: 160px solid transparent; border-top: 100px solid var(--azul-oscuro); z-index: 3; }
+    .sobre::after { content: ''; position: absolute; bottom: 0; left: 0; border-left: 160px solid var(--azul-claro); border-right: 160px solid var(--azul-claro); border-bottom: 100px solid var(--azul-medio); z-index: 2; }
+    .sello { position: absolute; top: 90px; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: radial-gradient(circle, var(--oro-claro), var(--oro-oscuro)); border-radius: 50%; z-index: 4; box-shadow: 0 0 10px var(--oro-oscuro); transition: opacity 0.5s ease; }
+    
+    .instruccion { position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); color: var(--azul-oscuro); font-size: 1.1rem; font-weight: bold; font-style: italic; white-space: nowrap; animation: latido 1.5s infinite alternate; transition: opacity 0.3s; }
+
+    #contenedor-carta {
+      position: absolute; z-index: 20; opacity: 0; pointer-events: none; transform: scale(0.8) translateY(50px);
+      transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #contenedor-carta.visible { opacity: 1; pointer-events: auto; transform: scale(1) translateY(0); }
+
+    .carta {
+      position: relative; width: 380px; height: 520px; background: var(--crema); border-radius: 5px;
+      box-shadow: 0 0 40px rgba(0, 80, 157, 0.25), 0 15px 35px rgba(0, 41, 107, 0.15); 
+      border: 2px solid var(--oro-oscuro); outline: 1px solid var(--oro-oscuro); outline-offset: -6px;
+      padding: 40px 30px; overflow: hidden;
+    }
+
+    #contador-paginas { position: absolute; top: 22px; right: 25px; color: var(--azul-oscuro); font-weight: bold; font-size: 1.1rem; opacity: 0; transition: opacity 0.5s; z-index: 12;}
+    
+    .flor-dibujo { position: absolute; top: 25px; left: 25px; width: 40px; height: 40px; opacity: 0.8; z-index: 11;}
+    .petalo { position: absolute; width: 12px; height: 12px; background: var(--azul-claro); border-radius: 50% 50% 0 50%; opacity: 0.6;}
+    .p1 { top: 5px; left: 12px; transform: rotate(45deg); } .p2 { top: 12px; left: 19px; transform: rotate(135deg); }
+    .p3 { top: 19px; left: 12px; transform: rotate(225deg); } .p4 { top: 12px; left: 5px; transform: rotate(315deg); }
+    .centro-flor { position: absolute; top: 13px; left: 13px; width: 10px; height: 10px; background: var(--oro-oscuro); border-radius: 50%;}
+
+    .corazon-magico { position: absolute; bottom: 25px; right: 30px; opacity: 0; color: var(--oro-oscuro); font-size: 1.8rem; animation: latidoCorazon 1.5s infinite; text-shadow: 0 0 10px var(--oro-claro); z-index: 11; transition: opacity 1s ease;}
+    @keyframes latidoCorazon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); text-shadow: 0 0 20px var(--oro-claro); } }
+
+    .resalte { color: var(--oro-oscuro); font-size: 1.25rem; font-weight: bold; text-shadow: 0 0 5px rgba(253, 197, 0, 0.4); font-style: normal; }
+    .resalte-final { display: block; text-align: center; color: var(--oro-oscuro); font-size: 1.9rem; font-weight: bold; text-shadow: 0 0 15px rgba(253, 197, 0, 0.6); font-style: normal; margin-top: 15px; }
+
+    .texto-carta {
+      color: var(--azul-oscuro); font-size: 1.05rem; font-style: italic; height: 75%; overflow-y: hidden; text-align: left; line-height: 35px;
+      background-image: repeating-linear-gradient(transparent, transparent 34px, rgba(0, 41, 107, 0.08) 34px, rgba(0, 41, 107, 0.08) 35px);
+      padding-top: 5px; margin-top: 15px; position: relative; z-index: 12;
+    }
+    .texto-carta::-webkit-scrollbar { display: none; }
+
+    .boton-siguiente {
+      position: absolute; bottom: 8%; right: 8%; background-color: var(--oro-oscuro); color: var(--azul-oscuro); 
+      padding: 15px 40px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 1.1rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.4s ease; opacity: 0; pointer-events: none; z-index: 30;
+    }
+    .boton-siguiente:hover { background-color: var(--oro-claro); transform: scale(1.1) !important; box-shadow: 0 0 20px rgba(241, 208, 10, 0.6); }
+    .boton-siguiente.mostrar { animation: aparecerPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: auto; }
+    
+    @keyframes aparecerPop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+    @keyframes latido { from { opacity: 0.6; } to { opacity: 1; transform: translateX(-50%) scale(1.05); } }
+    
+    #flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
+    #flash.brillar { opacity: 1; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Zonas de clic y flechas doradas -->
+  <div class="zona-clic" id="zona-izq" onclick="cambiarPagina(-1)"></div>
+  <div class="zona-clic" id="zona-der" onclick="cambiarPagina(1)"></div>
+  <div class="flecha-dorada" id="flecha-izq">&#8592;</div>
+  <div class="flecha-dorada" id="flecha-der">&#8594;</div>
+
+  <div class="efecto-tunel"></div>
+
+  <div id="escenario-camara">
+    <div id="overlay-atardecer"></div>
+    
+    <div id="paisaje-montanas">
+      <div class="montana m-atras"></div>
+      <div class="montana m-medio"></div>
+      <div class="montana m-frente"></div>
+    </div>
+
+    <div id="sol-contenedor">
+      <div id="sol-atardecer"></div>
+    </div>
+    
+    <div id="elementos-naturaleza"></div>
+
+    <div id="capa-niebla"></div>
+  </div>
+
+  <div id="fondo-vivo">
+    <div class="petalo-cae" style="left: 10%; --duracion: 12s; --delay: 0s;"></div>
+    <div class="petalo-cae" style="left: 30%; --duracion: 15s; --delay: 3s;"></div>
+    <div class="petalo-cae" style="left: 80%; --duracion: 14s; --delay: 5s;"></div>
+    <div class="luciernaga" style="left: 20%; --duracion: 10s; --delay: 1s;"></div>
+    <div class="luciernaga" style="left: 50%; --duracion: 13s; --delay: 4s;"></div>
+    <div class="luciernaga" style="left: 85%; --duracion: 11s; --delay: 2s;"></div>
+  </div>
+
+  <div id="flash"></div>
+
+  <div id="contenedor-sobre" onclick="abrirCarta()">
+    <div class="sobre" id="el-sobre"><div class="sello" id="sello-sobre"></div></div>
+    <div class="instruccion" id="texto-instruccion">Haz click en la carta para verla ✨</div>
+  </div>
+
+  <div id="contenedor-carta">
+    <div class="carta">
+      <div class="flor-dibujo">
+        <div class="petalo p1"></div><div class="petalo p2"></div>
+        <div class="petalo p3"></div><div class="petalo p4"></div>
+        <div class="centro-flor"></div>
+      </div>
+      <div id="contador-paginas">1 / 16</div>
+      <div class="texto-carta" id="texto-destino"></div>
+      <div class="corazon-magico" id="corazon">♥</div>
+    </div>
+  </div>
+
+  <a href="collage.html" class="boton-siguiente" id="btn-siguiente">VER SORPRESA FINAL ✨</a>
+
+  <script>
+    const paginas = [
+      `<span class="resalte">Te quiero.</span> De eso no me gustaría que tengas duda, un día me dijiste "lo mejor que me paso", estábamos en el laboratorio de computo, sentados, te dije "ah es que no te escuche bien"...`,
+      `...y empezamos a jugar un poco con eso de que yo tenía dudas pero, la realidad es que si escuche bien, es solo que, desde ese día, me quede pensando en eso...<br><br>Las palabras nunca han sido mi fuerte...`,
+      `...y de cierta forma me duele el hecho de saber que, simplemente no se como decirte todo esto que, no sé, ¿siento? ¿Vivo? ¿Tengo? Eres alguien muy especial para mí...`,
+      `...lo mínimo que mereces es que alguien esté ahí para no solo reír y pasar tiempo, sino también para hablar, escucharte, entenderte, consolarte si es necesario.`,
+      `Tal vez es muy temprano para decirtelo, tal vez me este tardando, pero yo no me estoy enamorando solamente de tu belleza física, esos ojos cafés que, entre las 11 y 2 pm se iluminan y me dejan hipnotizado...`,
+      `...esa sonrisa que es tan contagiosa, tus abrazos que hacen que 2 hrs se sientan como 2 min... También me estoy enamorando del interior, esa chica de la cual ciertas personas me intentaron hacer dudar con cosas falsas o exageradas...`,
+      `...y no pudieron porque al final, la verdad siempre sale a la luz. Esa chica que busca entender las cosas, esa curiosidad tuya, esos sentimientos tan bonitos que tienes, la forma en la que escribes cada cosa que sientes, piensas o vives, tu forma de ver y hablar, tus expresiones...`,
+      `Yo te quiero tanto, y quiero cuidar todo eso bueno que tienes, y también ayudarte a mejorar impulsarte a ser mejor, que te sientas segura y con confianza, que te sientas no solo querida, sino amada...`,
+      `Quiero que sepas que habrán momentos tensos, momentos donde pareciera que estamos mal, pero yo siempre estaré dispuesto a conversar y arreglar sea cual sea el problema, porque te quiero tanto que preferiría mil veces el bien en nosotros, antes que una relación mal llevada...`,
+      `...y sería muy superficial de mi parte solo hablar/estar cuando las cosas esten bien.<br><br>Cada noche, cada mañana, cada que puedo le oro a Dios por ti, por mi, por nosotros, independientemente de lo que tenga el para nuestras vidas, yo pido por lo mejor para ti...`,
+      `...y me gustaría ser esa persona que te acompañe no solo hoy, no solo mañana, sino que, así como los cisnes, me gustaría estar contigo el resto de mi vida, pero si no soy yo...`,
+      `...al menos quiero que sepas que el deseo de mi corazón y mis oraciones es que puedas vivir esa vida que me estoy imaginando con la persona que te hará feliz (ojalá pueda ser yo).`,
+      `La paciencia es una virtud, y esto que estamos teniendo es algo por la cual voy a hacer mucho uso, yo intentaré hacer las cosas bien, sin apresurarlas, sin obligarte a hacer algo que no quieras...`,
+      `...y si en algún punto sientes alguna incomodidad, no dudes en hacermelo saber, porque tal vez tenga miedo a perderte, pero tengo más miedo el lastimarte o el hacerte mal, es algo que no me perdonaría a mi mismo.`,
+      `Se que hay chicas más bonitas que tu, más graciosas, o más inteligentes, se que hay chicas que pudieran mostrar más cosas, pero quiero que sepas que yo te elijo a ti, tu fuiste, eres y serás mi primera y única opción, no hay nadie más, porque solo tengo ojos para ti.`,
+      `No sé si ya te lo he dicho pero, me gustas y hoy puedo decirte que te quiero, te quiero mucho lenita, pero como te dije el otro día, en algún punto me encantaría decirte que... Te amo.</span>`
+    ];
+
+    let paginaActual = 0;
+    let timeoutEscritura;
+
+    function construirNaturaleza() {
+      const escenario = document.getElementById('elementos-naturaleza');
+      
+      for(let i=0; i<60; i++) {
+        let pasto = document.createElement('div');
+        pasto.className = 'pasto-base anim-viento';
+        pasto.style.left = (Math.random() * 100) + 'vw';
+        pasto.style.height = (Math.random() * 50 + 20) + 'px';
+        pasto.style.animationDelay = (Math.random() * 3) + 's';
+        escenario.appendChild(pasto);
+      }
+
+      for(let i=0; i<20; i++) { crearPlanta(escenario, true); }
+      for(let i=0; i<12; i++) { crearPlanta(escenario, false); }
+    }
+
+    function crearPlanta(escenario, esFondo) {
+      let planta = document.createElement('div');
+      planta.className = 'planta-completa anim-viento-lento';
+      planta.style.left = (Math.random() * 95) + 'vw';
+      planta.style.animationDelay = (Math.random() * 4) + 's';
+
+      if (esFondo) {
+        planta.style.zIndex = "1";
+        planta.style.filter = "blur(2px)";
+        planta.style.transform = `scale(${Math.random() * 0.3 + 0.3})`;
+        planta.style.bottom = (Math.random() * 10 + 5) + 'vh'; 
+      } else {
+        planta.style.zIndex = "3";
+        planta.style.transform = `scale(${Math.random() * 0.4 + 0.8})`;
+      }
+
+      for(let h=0; h<6; h++) {
+        let hoja = document.createElement('div');
+        hoja.className = 'hoja-base';
+        hoja.style.transform = `rotate(${h * 30 - 75}deg)`;
+        planta.appendChild(hoja);
+      }
+
+      let tallo = document.createElement('div');
+      tallo.className = 'tallo-alto';
+      let altTallo = Math.random() * 60 + 120;
+      tallo.style.height = altTallo + 'px';
+
+      let cluster = document.createElement('div');
+      cluster.className = 'cluster-hortensia';
+      cluster.style.bottom = (altTallo - 10) + 'px'; 
+
+      let numFlores = esFondo ? 25 : 45;
+      let radioCluster = esFondo ? 25 : 35; 
+
+      for(let f=0; f<numFlores; f++) {
+        let flor = document.createElement('div');
+        flor.className = 'flor-azul';
+        
+        let r = Math.sqrt(Math.random()) * radioCluster;
+        let theta = Math.random() * 2 * Math.PI;
+        let x = r * Math.cos(theta);
+        let y = r * Math.sin(theta);
+
+        flor.style.left = `calc(50% + ${x}px)`;
+        flor.style.top = `calc(50% + ${y}px)`;
+        
+        if(Math.random() > 0.6) { flor.style.background = '#74b4e0'; }
+        if(Math.random() > 0.8) { flor.style.background = '#e6f2ff'; }
+        
+        cluster.appendChild(flor);
+      }
+
+      planta.appendChild(tallo);
+      planta.appendChild(cluster);
+      escenario.appendChild(planta);
+    }
+    
+    construirNaturaleza();
+
+    function actualizarEntorno() {
+      let progreso = paginaActual / (paginas.length - 1); 
+
+      document.getElementById('overlay-atardecer').style.opacity = progreso * 0.6;
+
+      let solContenedor = document.getElementById('sol-contenedor');
+      solContenedor.style.opacity = 0.2 + (progreso * 0.6);
+      solContenedor.style.transform = `translate(${progreso * 65}vw, -${progreso * 50}vh)`;
+
+      let pastos = document.querySelectorAll('.pasto-base');
+      pastos.forEach(p => {
+        let pEscala = Math.max(0, Math.min(1, (progreso - 0.1) * 3));
+        p.style.transform = `scaleY(${pEscala})`;
+      });
+
+      let hojas = document.querySelectorAll('.hoja-base');
+      hojas.forEach((h, index) => {
+        let hEscala = Math.max(0, Math.min(1, (progreso - 0.3) * 2.5));
+        h.style.transform = `scale(${hEscala}) rotate(${(index % 6) * 30 - 75}deg)`;
+      });
+    }
+
+    function abrirCarta() {
+      const sobre = document.getElementById('contenedor-sobre');
+      const instruccion = document.getElementById('texto-instruccion');
+      const flash = document.getElementById('flash');
+      const carta = document.getElementById('contenedor-carta');
+      const corazon = document.getElementById('corazon');
+      const contador = document.getElementById('contador-paginas');
+      
+      const zonaIzq = document.getElementById('zona-izq');
+      const zonaDer = document.getElementById('zona-der');
+      const flechaIzq = document.getElementById('flecha-izq');
+      const flechaDer = document.getElementById('flecha-der');
+
+      instruccion.style.opacity = '0';
+      sobre.style.transform = 'scale(1.2)';
+      
+      setTimeout(() => {
+        flash.classList.add('brillar');
+        setTimeout(() => {
+          sobre.style.display = 'none'; 
+          flash.classList.remove('brillar');
+          
+          setTimeout(() => {
+            carta.classList.add('visible'); 
+            setTimeout(() => {
+              corazon.style.opacity = '1'; 
+              contador.style.opacity = '1';
+              
+              zonaIzq.style.pointerEvents = 'auto';
+              zonaDer.style.pointerEvents = 'auto';
+              flechaIzq.classList.add('mostrar');
+              flechaDer.classList.add('mostrar');
+              
+              escribirPagina(); 
+            }, 800);
+          }, 500);
+        }, 400); 
+      }, 400); 
+    }
+
+    function escribirPagina() {
+      const contenedorTexto = document.getElementById('texto-destino');
+      const textoActual = paginas[paginaActual];
+      let i = 0;
+      
+      contenedorTexto.innerHTML = ""; 
+      clearTimeout(timeoutEscritura);
+
+      document.getElementById('contador-paginas').innerText = (paginaActual + 1) + " / " + paginas.length;
+      
+      if (paginaActual === 0) {
+        document.getElementById('flecha-izq').classList.add('oculta');
+      } else {
+        document.getElementById('flecha-izq').classList.remove('oculta');
+      }
+
+      if (paginaActual === paginas.length - 1) {
+        document.getElementById('flecha-der').classList.add('oculta');
+      } else {
+        document.getElementById('flecha-der').classList.remove('oculta');
+      }
+
+      function teclear() {
+        if (i < textoActual.length) {
+          if (textoActual.charAt(i) === '<') {
+            let etiqueta = "";
+            while (textoActual.charAt(i) !== '>' && i < textoActual.length) {
+              etiqueta += textoActual.charAt(i); i++;
+            }
+            etiqueta += '>'; i++; 
+            contenedorTexto.innerHTML += etiqueta;
+            timeoutEscritura = setTimeout(teclear, 0); 
+          } else {
+            contenedorTexto.innerHTML += textoActual.charAt(i);
+            i++;
+            timeoutEscritura = setTimeout(teclear, Math.random() * 10 + 5);
+          }
+        } else {
+          if (paginaActual === paginas.length - 1) {
+            setTimeout(() => { document.getElementById('btn-siguiente').classList.add('mostrar'); }, 800);
+          }
+        }
+      }
+      teclear();
+    }
+
+    function cambiarPagina(direccion) {
+      const nuevaPagina = paginaActual + direccion;
+      if (nuevaPagina >= 0 && nuevaPagina < paginas.length) {
+        paginaActual = nuevaPagina;
+        actualizarEntorno(); 
+        escribirPagina();
+      }
+    }
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') cambiarPagina(-1);
+      if (e.key === 'ArrowRight' || e.key === ' ') cambiarPagina(1);
+    });
+
+    // --- TRANSICIÓN FINAL SUAVE ---
+    document.getElementById('btn-siguiente').addEventListener('click', function(e) {
+      e.preventDefault(); 
+      const destino = this.href;
+      
+      // Bloquear navegación por si acaso
+      document.getElementById('zona-izq').style.pointerEvents = 'none';
+      document.getElementById('zona-der').style.pointerEvents = 'none';
+      document.getElementById('flecha-izq').classList.remove('mostrar');
+      document.getElementById('flecha-der').classList.remove('mostrar');
+      
+      // Ocultar botón por completo de inmediato
+      this.style.opacity = '0';
+      this.style.pointerEvents = 'none';
+      this.classList.remove('mostrar');
+      setTimeout(() => this.style.display = 'none', 500);
+
+      document.getElementById('contenedor-carta').style.opacity = '0';
+      document.getElementById('contenedor-carta').style.transform = 'scale(0.8) translateY(50px)';
+
+      setTimeout(() => {
+        document.getElementById('escenario-camara').classList.add('revelar-paisaje');
+      }, 500);
+      
+      setTimeout(() => {
+        document.getElementById('sol-atardecer').style.animation = "pulsoMagicoSol 1.5s ease-out";
+        document.getElementById('capa-niebla').style.opacity = '0'; 
+      }, 1000);
+
+      setTimeout(() => {
+        let plantas = document.querySelectorAll('.planta-completa');
+        plantas.forEach((planta, tIdx) => {
+          setTimeout(() => {
+            planta.querySelector('.tallo-alto').style.transform = 'scaleY(1)'; 
+            planta.querySelector('.cluster-hortensia').style.transform = 'scale(1)';
+          }, Math.random() * 800); 
+        });
+      }, 1500);
+
+      setTimeout(() => {
+        // FADE OUT suave global para los fondos vivos
+        document.getElementById('fondo-vivo').style.transition = "opacity 2s ease";
+        document.getElementById('fondo-vivo').style.opacity = "0";
+        document.getElementById('overlay-atardecer').style.transition = "opacity 2s ease";
+        document.getElementById('overlay-atardecer').style.opacity = "0";
+
+        // Desvanecimiento estático
+        let todosElementos = document.querySelectorAll('.planta-completa, .pasto-base, #sol-contenedor, .montana');
+        let arrayElementos = Array.from(todosElementos);
+        
+        arrayElementos.sort(() => Math.random() - 0.5);
+
+        arrayElementos.forEach((el, index) => {
+          setTimeout(() => {
+            el.style.transition = "opacity 0.8s ease, transform 0.8s ease";
+            el.style.opacity = "0";
+            el.style.transform = "translateY(30px)";
+          }, index * 25);
+        });
+
+        setTimeout(() => {
+          document.body.style.transition = "opacity 1.5s ease";
+          document.body.style.opacity = "0";
+          setTimeout(() => { window.location.href = destino; }, 1500); 
+        }, arrayElementos.length * 25 + 1000);
+
+      }, 6500); 
+    });
+  </script>
+</body>
+</html>

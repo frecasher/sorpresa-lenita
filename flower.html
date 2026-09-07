@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Para ti</title>
+  
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #F8F9FA;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+    }
+
+    /* --- 1. EL ARCO FLORAL --- */
+    .arco-contenedor {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 1;
+    }
+
+    .mancha {
+      position: absolute; border-radius: 50%; filter: blur(45px); opacity: 0;
+      animation: aparecer 3s ease forwards;
+    }
+    .m-azul-1 { top: -5%; left: 10%; width: 350px; height: 350px; background: rgba(116, 180, 224, 0.4); }
+    .m-azul-2 { top: -5%; right: 10%; width: 350px; height: 350px; background: rgba(116, 180, 224, 0.4); }
+    .m-oro-1 { top: 0%; left: 50%; transform: translateX(-50%); width: 500px; height: 250px; background: rgba(241, 208, 10, 0.2); }
+
+    .elemento-arco {
+      position: absolute; opacity: 0;
+      animation: aparecer 2s ease forwards var(--delay), viento 6s ease-in-out infinite alternate var(--delay);
+      filter: drop-shadow(2px 5px 8px rgba(0,0,0,0.15));
+    }
+    
+    .flor-amarilla {
+      position: absolute; width: 12px; height: 12px; background: #F1D00A; border-radius: 50%;
+      box-shadow: 0 0 10px #F1D00A, 6px 6px 0 -2px #fdc500, -6px 6px 0 -2px #fdc500, 0 -8px 0 -2px #fdc500;
+      opacity: 0; animation: aparecer 1s forwards var(--delay), latido 3s infinite alternate calc(var(--delay) + 1s);
+    }
+
+    /* --- EFECTO TÚNEL, LUCIÉRNAGAS Y RAYOS DE LUZ --- */
+    .efecto-tunel {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 41, 107, 0.15) 100%);
+      pointer-events: none; z-index: 2;
+    }
+
+    .luciernaga {
+      position: absolute; bottom: -20px; width: 6px; height: 6px;
+      background: #F1D00A; border-radius: 50%; box-shadow: 0 0 10px #F1D00A, 0 0 20px #fdc500;
+      opacity: 0; z-index: 4; animation: subirMagia var(--duracion) infinite ease-in-out var(--delay);
+    }
+    @keyframes subirMagia {
+      0% { transform: translateY(0) translateX(0) scale(0); opacity: 0; }
+      20% { opacity: 0.7; transform: translateY(-20vh) translateX(20px) scale(1); }
+      80% { opacity: 0.7; transform: translateY(-80vh) translateX(-20px) scale(1); }
+      100% { transform: translateY(-100vh) translateX(0) scale(0); opacity: 0; }
+    }
+
+    .sonda-luz {
+      position: absolute; top: -10%; width: 400px; height: 120%;
+      background: linear-gradient(90deg, transparent 0%, rgba(241, 208, 10, 0.15) 50%, transparent 100%);
+      filter: blur(15px); transform: skewX(-25deg); pointer-events: none; z-index: 2;
+      animation: barridoLuz var(--duracion) infinite linear var(--delay);
+    }
+    @keyframes barridoLuz {
+      0% { left: 120%; opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { left: -30%; opacity: 0; }
+    }
+
+    /* --- 2. LOS FRUTOS INTERACTIVOS --- */
+    .fruto-curioso {
+      position: absolute; width: 40px; height: 40px; background: radial-gradient(circle, #fff, #F1D00A);
+      border-radius: 50%; box-shadow: 0 0 20px #F1D00A; cursor: pointer; pointer-events: auto;
+      z-index: 50; opacity: 0; transform: scale(0);
+      animation: nacerFruto 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards var(--delay), flotarFruto 3s ease-in-out infinite alternate var(--delay);
+      transition: all 0.3s;
+    }
+    .fruto-curioso:hover { transform: scale(1.2); box-shadow: 0 0 30px #ffea00; }
+    .fruto-curioso.visto { background: radial-gradient(circle, #fff, #74b4e0); box-shadow: 0 0 15px #74b4e0; }
+
+    /* --- MENSAJE DE INSTRUCCIÓN TEMPORAL --- */
+    #mensaje-instruccion {
+      position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+      color: #00296b; font-size: 1.3rem; font-weight: bold; font-style: italic;
+      text-align: center; opacity: 0; pointer-events: none; z-index: 20;
+      text-shadow: 0 0 10px #F8F9FA, 0 0 20px #F8F9FA, 0 0 30px rgba(241, 208, 10, 0.6);
+      transition: opacity 0.5s ease; animation: latirInstruccion 2s infinite alternate;
+    }
+    @keyframes latirInstruccion {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+      100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+    }
+
+    /* --- 3. MODAL DE DATOS CURIOSOS --- */
+    #modal-dato {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(248, 249, 250, 0.85); backdrop-filter: blur(5px);
+      z-index: 100; display: flex; justify-content: center; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+    }
+    #modal-dato.activo { opacity: 1; pointer-events: auto; }
+    
+    .tarjeta {
+      background: #003f88; color: white; padding: 40px; border-radius: 20px;
+      border: 3px solid #F1D00A; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 400px; text-align: center;
+      transform: translateY(50px); transition: transform 0.4s ease;
+    }
+    #modal-dato.activo .tarjeta { transform: translateY(0); }
+    .tarjeta h3 { color: #F1D00A; margin-top: 0; font-size: 1.5rem; }
+    .tarjeta p { font-size: 1.2rem; line-height: 1.5; }
+    .btn-cerrar { margin-top: 20px; background: #F1D00A; color: #00296b; border: none; padding: 10px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+    /* --- 4. CONTENEDOR DEL GRAN FINAL --- */
+    #centro-revelado {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: flex-end; 
+      opacity: 0; pointer-events: none; transition: opacity 2s ease; z-index: 5;
+    }
+
+    /* --- BOTÓN FINAL A LA CARTA --- */
+    .boton-siguiente {
+      position: absolute; bottom: 15%; right: 12%; 
+      background-color: #F1D00A; color: #21325E; padding: 15px 40px; text-decoration: none;
+      border-radius: 30px; font-weight: bold; font-size: 1.1rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;
+      opacity: 0; pointer-events: none; z-index: 110;
+    }
+    .boton-siguiente:hover {
+      background-color: #fdc500; transform: scale(1.1) !important; box-shadow: 0 0 20px rgba(241, 208, 10, 0.6);
+    }
+    .boton-siguiente.mostrar {
+      animation: aparecerPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: auto;
+    }
+    @keyframes aparecerPop { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+    /* --- 5. TU CÓDIGO CSS ORIGINAL DE LA FLOR Y TÍTULO --- */
+    .titulo {
+      position: absolute; top: 33%; text-align: center; color: #00296b; font-weight: bold;
+      font-size: 1.5rem; width: 90%; z-index: 100; text-shadow: 0 0 10px rgba(241,208,10,0.5), 0 0 20px rgba(253,197,0,0.3);
+      opacity: 0; transition: opacity 2s ease-in-out; pointer-events: none;
+    }
+    .titulo.mostrar { opacity: 1; }
+
+    #hortensia-container { position: relative; width: 300px; height: 550px; }
+
+    .tallo {
+      position: absolute; bottom: 0; left: 50%; width: 8px; height: 0px; 
+      background: linear-gradient(to right, #2d5a27, #45803c);
+      transform: translateX(-50%); border-radius: 4px; animation: crecerTallo 2s ease-out forwards;
+    }
+
+    .hoja {
+      position: absolute; width: 50px; height: 25px; background: linear-gradient(to bottom right, #45803c, #2d5a27);
+      border-radius: 50% 0 50% 0; opacity: 0; transform: scale(0); animation: aparecerHoja 1s ease-out forwards;
+    }
+    .hoja.izq { left: -48px; transform-origin: right bottom; }
+    .hoja.der { right: -48px; border-radius: 0 50% 0 50%; transform-origin: left bottom; }
+
+    .cluster { position: absolute; left: 50%; bottom: 300px; transform: translateX(-50%); }
+
+    .florecita {
+      position: absolute; width: 32px; height: 32px; border-radius: 40%; opacity: 0; transform: scale(0) translate(-50%, -50%);
+      animation: florecer 0.8s ease-out forwards; box-shadow: 0 0 6px rgba(116, 180, 224, 0.4);
+    }
+    .florecita::after {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 5px; height: 5px; background-color: #ffd500; border-radius: 50%;
+    }
+
+    @keyframes crecerTallo { to { height: 310px; } }
+    @keyframes aparecerHoja { to { opacity: 1; transform: scale(1) rotate(var(--rotacion)); } }
+    @keyframes florecer { to { opacity: 1; transform: scale(1) translate(-50%, -50%); } }
+    @keyframes aparecer { to { opacity: 1; } }
+    @keyframes viento { 0% { transform: rotate(-2deg); } 100% { transform: rotate(2deg); } }
+    @keyframes latido { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.2); opacity: 1; } }
+    @keyframes nacerFruto { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes flotarFruto { 0% { transform: translateY(0px); } 100% { transform: translateY(-10px); } }
+  </style>
+</head>
+<body>
+
+  <div class="arco-contenedor">
+    <div class="mancha m-azul-1"></div><div class="mancha m-azul-2"></div><div class="mancha m-oro-1"></div>
+    <div class="efecto-tunel"></div>
+
+    <div class="sonda-luz" style="--duracion: 12s; --delay: 0s;"></div>
+    <div class="sonda-luz" style="--duracion: 18s; --delay: 6s; opacity: 0.6; width: 600px;"></div>
+
+    <div class="luciernaga" style="left: 15%; --duracion: 12s; --delay: 0s;"></div>
+    <div class="luciernaga" style="left: 35%; --duracion: 15s; --delay: 2s;"></div>
+    <div class="luciernaga" style="left: 55%; --duracion: 11s; --delay: 5s;"></div>
+    <div class="luciernaga" style="left: 75%; --duracion: 14s; --delay: 1s;"></div>
+    <div class="luciernaga" style="left: 85%; --duracion: 13s; --delay: 4s;"></div>
+    <div class="luciernaga" style="left: 25%; --duracion: 16s; --delay: 6s;"></div>
+    <div class="luciernaga" style="left: 65%; --duracion: 12s; --delay: 3s;"></div>
+
+    <img src="img/rama.png" class="elemento-arco" style="top: 55%; left: -20px; width: 180px; transform: rotate(20deg); --delay: 0.1s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: 50%; left: -30px; width: 200px; transform: rotate(15deg); --delay: 0.2s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: 30%; left: 0%; width: 200px; transform: rotate(45deg); --delay: 0.3s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: 25%; left: -10px; width: 220px; transform: rotate(40deg); --delay: 0.4s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: 5%; left: 15%; width: 220px; transform: rotate(70deg); --delay: 0.5s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: -5px; left: 10%; width: 240px; transform: rotate(65deg); --delay: 0.6s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: -20px; left: 35%; width: 250px; transform: rotate(90deg); --delay: 0.7s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: -40px; left: 35%; width: 260px; transform: rotate(90deg); --delay: 0.8s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: -20px; right: 35%; width: 250px; transform: rotate(-90deg); --delay: 0.9s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: 5%; right: 15%; width: 220px; transform: rotate(-70deg); --delay: 1.0s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: -5px; right: 10%; width: 240px; transform: rotate(-65deg); --delay: 1.1s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: 30%; right: 0%; width: 200px; transform: rotate(-45deg); --delay: 1.2s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: 25%; right: -10px; width: 220px; transform: rotate(-40deg); --delay: 1.3s;">
+    <img src="img/rama.png" class="elemento-arco" style="top: 55%; right: -20px; width: 180px; transform: rotate(-20deg); --delay: 1.4s;">
+    <img src="img/flores.png" class="elemento-arco" style="top: 50%; right: -30px; width: 200px; transform: rotate(-15deg); --delay: 1.5s;">
+
+    <div class="flor-amarilla" style="top: 40%; left: 10%; --delay: 1.6s;"></div>
+    <div class="flor-amarilla" style="top: 20%; left: 25%; --delay: 1.8s;"></div>
+    <div class="flor-amarilla" style="top: 8%; left: 45%; --delay: 2.0s;"></div>
+    <div class="flor-amarilla" style="top: 20%; right: 25%; --delay: 2.2s;"></div>
+    <div class="flor-amarilla" style="top: 40%; right: 10%; --delay: 2.4s;"></div>
+  </div>
+
+  <div id="mensaje-instruccion">Toca las luces doradas ✨</div>
+
+  <div class="fruto-curioso" style="top: 45%; left: 18%; --delay: 3s;"></div>
+  <div class="fruto-curioso" style="top: 25%; left: 35%; --delay: 3.3s;"></div>
+  <div class="fruto-curioso" style="top: 25%; right: 35%; --delay: 3.6s;"></div>
+  <div class="fruto-curioso" style="top: 45%; right: 18%; --delay: 3.9s;"></div>
+
+  <div id="centro-revelado">
+    <h1 class="titulo">
+      Las hortensias expresan algo diferente dependiendo de dónde están.<br><br>
+      Azul... Mi color favorito.
+    </h1>
+    <div id="hortensia-container"></div>
+    
+    <a href="carta.html" class="boton-siguiente" id="btn-carta">IR A LA CARTA</a>
+  </div>
+
+  <div id="modal-dato">
+    <div class="tarjeta">
+      <h3 id="modal-titulo">Dato Curioso</h3>
+      <p id="modal-texto">Texto aquí.</p>
+      <button class="btn-cerrar" id="btn-cerrar-modal">Entendido ✨</button>
+    </div>
+  </div>
+
+  <script src="main.js"></script> 
+
+  <script>
+    const baseDatos = {
+      1: "Las hortensias pueden cambiar de color dependiendo del suelo donde crecen. Me parece curioso cómo el entorno puede influir tanto en algo tan bonito.",
+      2: "Una hortensia parece una sola flor, pero en realidad está formada por muchas florecitas pequeñas. Como si lo bonito se construyera poco a poco",
+      3: "El color azul aparece cuando el suelo es más ácido y la planta puede absorber aluminio. La naturaleza tiene formas muy curiosas de hacer las cosas.",
+      4: "Las hortensias necesitan bastante agua para mantenerse bonitas. Hasta las cosas más hermosas necesitan de cuidado."
+    };
+
+    let datosLeidos = 0;
+    let frutoActual = null;
+    let frutosYaVistos = new Set();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const frutos = document.querySelectorAll('.fruto-curioso');
+      const instruccion = document.getElementById('mensaje-instruccion');
+      const modal = document.getElementById('modal-dato');
+      const tituloModal = document.getElementById('modal-titulo');
+      const textoModal = document.getElementById('modal-texto');
+      const btnCerrar = document.getElementById('btn-cerrar-modal');
+
+      // Mostrar instrucción después de 5 segundos si no ha hecho clic
+      setTimeout(() => {
+        if (datosLeidos === 0) {
+          instruccion.style.opacity = '1';
+        }
+      }, 5000);
+
+      frutos.forEach((fruto, index) => {
+        fruto.addEventListener('click', function() {
+          instruccion.style.display = 'none';
+          
+          const id = index + 1;
+          tituloModal.innerText = "Dato Curioso " + id;
+          textoModal.innerText = baseDatos[id];
+          modal.classList.add('activo');
+          frutoActual = { id: id, element: this };
+        });
+      });
+
+      btnCerrar.addEventListener('click', () => {
+        modal.classList.remove('activo');
+        
+        if (frutoActual && !frutosYaVistos.has(frutoActual.id)) {
+          frutosYaVistos.add(frutoActual.id);
+          datosLeidos++;
+          frutoActual.element.classList.add('visto');
+          
+          if (datosLeidos === 4) {
+            revelarGranFinal();
+          }
+        }
+      });
+    });
+
+    function revelarGranFinal() {
+      // 1. Iluminar contenedor central
+      const centro = document.getElementById('centro-revelado');
+      centro.style.opacity = '1';
+      centro.style.pointerEvents = 'auto';
+
+      // 2. Encender título
+      document.querySelector('.titulo').classList.add('mostrar');
+
+      // 3. Dibujar flor
+      if(typeof dibujarFlorOriginal === 'function') {
+        dibujarFlorOriginal();
+      } else {
+        console.error("No se encontró dibujarFlorOriginal() en main.js");
+      }
+
+      // 4. Mostrar botón después de 4 segundos
+      setTimeout(() => {
+        document.getElementById('btn-carta').classList.add('mostrar');
+      }, 4000);
+    }
+
+    // Transición suave hacia la carta
+    document.addEventListener("DOMContentLoaded", () => {
+      // (Tu código existente del DOMContentLoaded sigue igual...)
+      
+      // Agregamos el evento al botón de la carta:
+      const btnCarta = document.getElementById('btn-carta');
+      if(btnCarta) {
+        btnCarta.addEventListener('click', function(e) {
+          e.preventDefault(); // Evita el salto brusco
+          const destino = this.href;
+          
+          // Desvanece toda la pantalla suavemente
+          document.body.style.transition = "opacity 1.5s ease";
+          document.body.style.opacity = "0";
+          
+          // Espera a que termine de desvanecerse para cambiar de página
+          setTimeout(() => {
+            window.location.href = destino;
+          }, 1500);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
+

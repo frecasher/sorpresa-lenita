@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuestra Historia</title>
+  <style>
+    :root {
+      --azul-oscuro: #00296b;
+      --azul-medio: #003f88;
+      --azul-claro: #00509d;
+      --oro-oscuro: #fdc500;
+      --oro-claro: #ffd500;
+      --crema: #F8F9FA;
+      --verde-tallo: #556b2f;
+      --verde-hoja: #6b8e23;
+    }
+
+    body {
+      margin: 0; overflow: hidden; height: 100vh;
+      background-color: var(--crema);
+      display: flex; justify-content: center; align-items: center;
+      font-family: 'Georgia', serif;
+    }
+
+    /* --- FONDO VIVO (VISIBLE DESDE EL INICIO) --- */
+    .efecto-tunel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 30%, rgba(0, 41, 107, 0.08) 100%); pointer-events: none; z-index: 1; }
+    .luz-fondo { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3; animation: respirarLuz 8s infinite alternate ease-in-out; pointer-events: none; z-index: 0; }
+    .luz-azul { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--azul-claro); }
+    .luz-oro { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: var(--oro-oscuro); animation-delay: 4s; }
+    @keyframes respirarLuz { 0% { transform: scale(1); opacity: 0.2; } 100% { transform: scale(1.2); opacity: 0.4; } }
+    .luciernaga { position: absolute; bottom: -20px; width: 5px; height: 5px; background: var(--oro-claro); border-radius: 50%; box-shadow: 0 0 10px var(--oro-claro), 0 0 20px var(--oro-oscuro); animation: subirMagia var(--duracion) infinite ease-in-out var(--delay); z-index: 2; pointer-events: none; }
+    @keyframes subirMagia { 0% { transform: translateY(0) scale(0); opacity: 0; } 20% { opacity: 0.6; transform: translateY(-20vh) scale(1); } 80% { opacity: 0.6; transform: translateY(-80vh) scale(1); } 100% { transform: translateY(-100vh) scale(0); opacity: 0; } }
+
+    /* --- ZONAS DE CLIC EN PANTALLA --- */
+    .zona-clic {
+      position: fixed; top: 0; width: 50vw; height: 100vh; z-index: 15; cursor: pointer; pointer-events: none;
+    }
+    #zona-izq { left: 0; }
+    #zona-der { right: 0; }
+
+    /* =========================================
+       1. INTRO CINEMÁTICA
+       ========================================= */
+    #intro-cinematica {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 100; display: flex; justify-content: center; align-items: center;
+      transition: opacity 2.5s ease-in-out; 
+    }
+
+    #btn-comenzar {
+      background: var(--azul-oscuro); color: var(--crema); border: 2px solid var(--oro-oscuro);
+      border-radius: 30px; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; font-family: 'Georgia', serif;
+      cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: all 0.3s; z-index: 105;
+      animation: latidoInicial 2s infinite alternate ease-in-out;
+    }
+    #btn-comenzar:hover { transform: scale(1.1) !important; background: var(--azul-medio); box-shadow: 0 15px 30px rgba(253, 197, 0, 0.4); animation: none; }
+    @keyframes latidoInicial { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+    #muro-fotos { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 101; pointer-events: none; overflow: hidden; transition: filter 2s ease; }
+    .foto-muro { position: absolute; object-fit: cover; border: 4px solid #fff; border-bottom: 12px solid #fff; box-shadow: 0 15px 25px rgba(0,0,0,0.4); opacity: 0; transform: scale(0.3) translate(-50%, -50%); transform-origin: top left; animation: estamparFoto 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes estamparFoto { to { opacity: 0.85; transform: scale(1) translate(-50%, -50%) rotate(var(--rot)); } }
+
+    #muro-textos { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 102; pointer-events: none; }
+    .texto-destello { position: absolute; color: #fff; font-size: 3.5rem; font-weight: bold; font-style: italic; text-align: center; text-shadow: 0 0 20px var(--azul-claro), 0 5px 15px rgba(0,0,0,0.8); opacity: 0; transform: translate(-50%, -50%) scale(0.5); animation: flashTexto 2.5s ease-in-out forwards; }
+    @keyframes flashTexto { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); filter: blur(10px); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); filter: blur(0); text-shadow: 0 0 40px var(--oro-claro), 0 0 20px #fff; } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); filter: blur(10px); } }
+
+    /* --- GALERÍA PRINCIPAL --- */
+    #galeria-container {
+      position: relative; z-index: 20; /* Elevamos el z-index por encima de las zonas de clic */
+      display: flex; flex-direction: row; align-items: center; justify-content: center;
+      gap: 50px; width: 90%; max-width: 1000px; 
+      opacity: 0; transform: scale(0.9);
+      transition: opacity 3s ease, transform 3s cubic-bezier(0.25, 1, 0.5, 1);
+      pointer-events: none; /* Permitimos que los clics traspasen a la capa de fondo */
+    }
+    #galeria-container.visible { opacity: 1; transform: scale(1); }
+
+    .pila-fotos { position: relative; width: 400px; height: 450px; perspective: 1000px; }
+    .foto-fondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; border-radius: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+    .ff-1 { transform: rotate(-4deg) translate(-10px, 10px); z-index: 1; background: #eef2f5;}
+    .ff-2 { transform: rotate(3deg) translate(10px, 5px); z-index: 2; background: #fdfdfd;}
+    #foto-activa-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; border-radius: 10px; padding: 15px; box-sizing: border-box; box-shadow: 0 15px 35px rgba(0, 41, 107, 0.3); z-index: 3; }
+    #imagen-activa { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+
+    .panel-derecho { display: flex; flex-direction: column; width: 450px; animation: flotarSutil 4s infinite alternate ease-in-out; }
+    @keyframes flotarSutil { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+    .tarjeta-texto { background: var(--azul-oscuro); border: 2px solid var(--oro-oscuro); border-radius: 15px; padding: 40px 35px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); position: relative; min-height: 250px; display: flex; align-items: center; justify-content: center; }
+    .tarjeta-texto::before { content: ''; position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; border: 1px solid rgba(253, 197, 0, 0.4); border-radius: 10px; pointer-events: none; }
+    #texto-activo { color: var(--crema); font-size: 1.15rem; line-height: 1.7; text-align: center; font-style: italic; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    
+    /* --- CONTROLES Y FLECHAS --- */
+    .controles { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; position: relative; z-index: 25; }
+    .indicador { color: var(--azul-oscuro); font-weight: bold; font-size: 1.1rem; letter-spacing: 2px; }
+    
+    .flecha-dorada {
+      color: var(--oro-oscuro); font-size: 2.5rem; cursor: pointer; transition: all 0.3s ease;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3); user-select: none;
+      pointer-events: auto; /* Restablecemos el clic específicamente para las flechas */
+    }
+    .flecha-dorada:hover { color: var(--oro-claro); transform: scale(1.2); text-shadow: 0 2px 15px rgba(253, 197, 0, 0.6); }
+    .flecha-dorada.oculto { opacity: 0; pointer-events: none; }
+
+    /* EL BOTÓN FINAL */
+    #btn-ver-final { 
+      position: absolute; right: 0; background: var(--oro-oscuro); color: var(--azul-oscuro); border: none; border-radius: 25px; padding: 10px 25px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: all 0.5s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+      opacity: 0; pointer-events: none; z-index: 30; 
+    }
+    #btn-ver-final.mostrar { 
+      opacity: 1; pointer-events: auto; /* Restablecemos el clic para el botón */
+      transform: scale(1.05); animation: latidoBtn 1.5s infinite alternate; 
+    }
+    @keyframes latidoBtn { from { transform: scale(1); box-shadow: 0 0 10px var(--oro-oscuro); } to { transform: scale(1.1); box-shadow: 0 0 20px var(--oro-claro); } }
+
+    .transicion-suave { transition: opacity 0.5s ease-in-out, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); opacity: 1; transform: translateY(0); }
+    .oculto { opacity: 0 !important; transform: translateY(20px) !important; }
+
+    /* --- EL GRAN FINAL --- */
+    #gran-final-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 50; display: none; overflow: hidden; }
+    #cielo-fuegos { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .fuego-destello { position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); opacity: 0; animation: flash 0.3s ease-out forwards; }
+    @keyframes flash { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; box-shadow: 0 0 50px #fff; } 100% { transform: translate(-50%, -50%) scale(3); opacity: 0; } }
+    .fuego-particula { position: absolute; border-radius: 50%; opacity: 0; animation: explosion 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+    @keyframes explosion { 0% { transform: translate(0, 0) scale(1.5); opacity: 1; filter: brightness(2); } 70% { opacity: 0.8; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }
+    
+    #jardin-enredaderas { position: absolute; top: -5vh; left: 5vw; width: 90vw; height: 85vh; display: flex; justify-content: space-around; z-index: 5; }
+    .enredadera { position: relative; width: 3px; background: var(--verde-tallo); height: 0; transition: height 2.5s ease-out; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3vh; padding-top: 8vh; }
+    .marco-colgado { position: relative; width: clamp(60px, 11vw, 120px); height: clamp(60px, 11vw, 120px); background: #fff; padding: 4px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); opacity: 0; transform: scale(0.2) rotate(-10deg); transform-origin: top center; transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .marco-colgado::before { content: ''; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 2px; height: 15px; background: var(--verde-tallo); }
+    .marco-colgado img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+    .marco-colgado.aparecer { opacity: 1; transform: scale(1) rotate(0deg); }
+    .marco-colgado.balanceo { animation: swing 4s infinite alternate ease-in-out; }
+    @keyframes swing { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); } }
+
+    #tarjeta-final-ancha { position: absolute; bottom: -100%; left: 50%; transform: translateX(-50%); width: 60%; max-width: 600px; background: var(--azul-oscuro); border: 2px solid var(--oro-oscuro); border-radius: 20px; padding: 30px 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.3); text-align: center; z-index: 20; transition: bottom 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    #tarjeta-final-ancha.subir { bottom: 10vh; }
+    #tarjeta-final-ancha h1 { color: var(--oro-claro); margin: 0 0 10px 0; font-size: 2.5rem; text-shadow: 0 0 15px rgba(253, 197, 0, 0.6); }
+    .resalte-txt { color: var(--crema); font-size: 1.5rem; font-style: italic; font-weight: bold; }
+
+    #ramo-esquina { position: absolute; bottom: -20px; right: 5vw; width: 200px; height: 280px; z-index: 25; pointer-events: none; }
+    .jarron-cristal { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 80px; height: 120px; background: linear-gradient(to right, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(255,255,255,0.1)); border: 2px solid rgba(255,255,255,0.5); border-radius: 10px 10px 30px 30px; box-shadow: inset 0 -10px 20px rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.2); opacity: 0; transition: opacity 1s ease 3s; }
+    .hoja-ramo { position: absolute; bottom: 90px; left: 50%; width: 40px; height: 80px; background: var(--verde-hoja); border-radius: 50% 0 50% 0; transform-origin: bottom left; opacity: 0; transition: opacity 1s ease, transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3); }
+    .cluster-ramo { position: absolute; bottom: 100px; left: 50%; width: 2px; height: 2px; }
+    .flor-azul-ramo { position: absolute; width: 25px; height: 25px; background: var(--azul-claro); border-radius: 50%; transform: translate(-50%, -50%); box-shadow: inset -3px -3px 6px rgba(0, 41, 107, 0.6); }
+    .flor-azul-ramo::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 6px; height: 6px; background: var(--oro-claro); border-radius: 50%; }
+
+    @media (max-width: 900px) {
+      #galeria-container { flex-direction: column; gap: 30px; margin-top: 20px; }
+      .pila-fotos { width: 320px; height: 360px; }
+      .panel-derecho { width: 90%; max-width: 400px; }
+      .tarjeta-texto { padding: 30px 20px; min-height: 180px; }
+      #tarjeta-final-ancha { width: 85%; padding: 25px; bottom: -120%; }
+      #tarjeta-final-ancha h1 { font-size: 1.8rem; }
+      .resalte-txt { font-size: 1.2rem; }
+      #ramo-esquina { right: -20px; transform: scale(0.7); }
+      .texto-destello { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Zonas de clic interactivo en pantalla -->
+  <div class="zona-clic" id="zona-izq" onclick="cambiarFoto(-1)"></div>
+  <div class="zona-clic" id="zona-der" onclick="cambiarFoto(1)"></div>
+
+  <audio id="musica-fondo" loop>
+    <source src="cancion.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="luz-fondo luz-azul"></div>
+  <div class="luz-fondo luz-oro"></div>
+  <div class="efecto-tunel"></div>
+  <div class="luciernaga" style="left: 15%; --duracion: 12s; --delay: 0s;"></div>
+  <div class="luciernaga" style="left: 45%; --duracion: 15s; --delay: 3s;"></div>
+  <div class="luciernaga" style="left: 80%; --duracion: 11s; --delay: 1s;"></div>
+  <div class="luciernaga" style="left: 25%; --duracion: 14s; --delay: 5s;"></div>
+
+  <div id="intro-cinematica">
+    <button id="btn-comenzar" onclick="iniciarExperiencia()">Comenzar ❤️</button>
+    <div id="muro-fotos"></div>
+    <div id="muro-textos"></div>
+  </div>
+
+  <div id="galeria-container">
+    <div class="pila-fotos">
+      <div class="foto-fondo ff-1"></div>
+      <div class="foto-fondo ff-2"></div>
+      <div id="foto-activa-container" class="transicion-suave">
+        <img id="imagen-activa" src="" alt="Nuestra Foto">
+      </div>
+    </div>
+    <div class="panel-derecho">
+      <div class="tarjeta-texto transicion-suave" id="tarjeta-texto">
+        <div id="texto-activo"></div>
+      </div>
+      <div class="controles">
+        <div class="flecha-dorada" id="btn-atras" onclick="cambiarFoto(-1)">&#8592;</div>
+        <div class="indicador" id="contador-fotos">1 / 19</div>
+        <div class="flecha-dorada" id="btn-adelante" onclick="cambiarFoto(1)">&#8594;</div>
+        <button id="btn-ver-final" onclick="iniciarGranFinal()">Ver Final ✨</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gran-final-container">
+    <div id="cielo-fuegos"></div>
+    <div id="jardin-enredaderas"></div>
+    <div id="ramo-esquina"></div>
+    <div id="tarjeta-final-ancha">
+      <h1>¡Feliz Cumpleaños Lenita!</h1>
+      <p class="resalte-txt">Te quiero muchooo ❤️</p>
+    </div>
+  </div>
+
+  <script>
+    const totalFotosFlash = 66; 
+    const mensajesRáfaga = [
+      "Cada risa...", 
+      "Cada mirada...", 
+      "Cada momento...", 
+      "Las turbulencias...", 
+      "Las victorias...", 
+      "Todo nos trajo aquí.", 
+      "Nuestra historia", 
+      "19 años"
+    ];
+
+    function iniciarExperiencia() {
+      document.getElementById('btn-comenzar').style.display = 'none';
+      const musica = document.getElementById('musica-fondo');
+      musica.volume = 0.6;
+      musica.play();
+
+      const muroFotos = document.getElementById('muro-fotos');
+      let contadorFoto = 1;
+      
+      let intervaloFotos = setInterval(() => {
+        let img = document.createElement('img');
+        img.src = `img/flash/${contadorFoto}.jpg`;
+        img.className = 'foto-muro';
+        
+        let size = Math.random() * 120 + 120; 
+        img.style.width = size + 'px';
+        img.style.height = size + 'px';
+        img.style.left = (Math.random() * 90 + 5) + 'vw';
+        img.style.top = (Math.random() * 90 + 5) + 'vh';
+        img.style.setProperty('--rot', (Math.random() * 60 - 30) + 'deg');
+
+        muroFotos.appendChild(img);
+        contadorFoto++;
+        
+        if(contadorFoto > totalFotosFlash) {
+          clearInterval(intervaloFotos);
+          setTimeout(() => {
+            muroFotos.style.filter = 'brightness(0.35) blur(2px)';
+            iniciarRafagaTextos(); 
+          }, 800);
+        }
+      }, 70); 
+    }
+
+    function iniciarRafagaTextos() {
+      const muroTextos = document.getElementById('muro-textos');
+      let contadorTexto = 0;
+
+      let intervaloTextos = setInterval(() => {
+        let t = document.createElement('div');
+        t.className = 'texto-destello';
+        t.innerText = mensajesRáfaga[contadorTexto];
+        
+        t.style.left = (Math.random() * 40 + 30) + 'vw';
+        t.style.top = (Math.random() * 60 + 20) + 'vh';
+
+        muroTextos.appendChild(t);
+        contadorTexto++;
+        
+        if(contadorTexto >= mensajesRáfaga.length) {
+          clearInterval(intervaloTextos);
+          
+          setTimeout(() => {
+            let intro = document.getElementById('intro-cinematica');
+            intro.style.opacity = '0'; 
+            
+            setTimeout(() => {
+              intro.style.display = 'none';
+              document.getElementById('galeria-container').classList.add('visible');
+              
+              document.getElementById('zona-izq').style.pointerEvents = 'auto';
+              document.getElementById('zona-der').style.pointerEvents = 'auto';
+            }, 2500); 
+            
+          }, 2000); 
+        }
+      }, 1000); 
+    }
+
+    const miHistoria = [
+      { img: "img/foto1.jpg", txt: "Como olvidar ese día en la playa... Tan bonita como siempre, esos ojos que me tienen atrapado en tu mirada y hacen que no pueda parar de sonreír cada que te veo..." },
+      { img: "img/foto2.jpg", txt: "Es gracioso porque aquí es donde nos damos cuenta que Karlita se pasó de graciosa y nos estaba tomando fotos. Lo curioso es que, al mismo tiempo agachamos la cabeza mientras nos íbamos." },
+      { img: "img/foto3.jpg", txt: "En esta foto te estabas cayendo jajaj, perdón, es que me emocioné c:" },
+      { img: "img/foto4.jpg", txt: "A pesar de que fue espontánea esta foto, es una de mis favoritas, no sé, el cómo se sentía ese cálido abrazo, me hace volver a imaginarlo una y otra vez." },
+      { img: "img/foto5.jpg", txt: "¡Nuestros primeros diamantes! tu los encontraste y tu los picaste, son los primeros de muchos más, además de que eres muy linda, eres muy pro." },
+      { img: "img/foto6.jpg", txt: "La foto que vió Karlita (que pena, pero, don worri) quiero que sepas que me gustó mucho ese abrazo, ojalá puedas darme uno hoy." },
+      { img: "img/foto7.jpg", txt: "Ojalá haber estado ahí... No se si ya te lo he dicho, pero eres muy linda, esos ojos son simplemente hermosos, esa sonrisa, ay no, ya te extraño..." },
+      { img: "img/foto8.jpg", txt: "Foto pata, ese día en la playa, me quemé porque no usé bloqueador, pero, valió la pena porque pude estar contigo. Estos momentos donde 2 hrs se convierten en 2 min.." },
+      { img: "img/foto9.jpg", txt: "Foto k-drama moment y eso que ni los veo eh. Me gusta mucho agarrarte la mano y caminar o manejar, por cierto, perdón si me sudan, es que me pones nervioso." },
+      { img: "img/foto10.jpg", txt: "Que voy a hacer con esa mirada, no puedo con esos ojos tan hermosos que tienes, ay Lenita ya te extraño :(" },
+      { img: "img/foto11.jpg", txt: "Esa sonrisa, ojalá que en esta foto puedas notar lo mucho que me haces feliz y te prometo que hare lo que pueda para que siempre te sientas bien y puedas sonreír sin necesidad de fingir..." },
+      { img: "img/foto12.jpg", txt: "Oye no se si lo sabias, pero, me gustas mucho y te quiero mucho también, espero en esta foto se pueda demostrar un poco eso." },
+      { img: "img/foto13.jpg", txt: "Oye no se si ya te lo dije, pero te quiero mucho. Mira tu pelo, si se nota esos rayitos que te hiciste, te ves muy preciosa." },
+      { img: "img/foto14.jpg", txt: "¿Te puedo confesar algo? me gustas y te quiero mucho. Como olvidar que ese día cilantro gritó '¡ahí estan!' jajaj, peldon por eso :)" },
+      { img: "img/foto15.jpg", txt: "Hasta ahora, el mejor inicio de mes de este año, no diría que será el mejor, porque quedan algunos meses donde podríamos volver a salir ¿Vale?" },
+      { img: "img/foto16.jpg", txt: "No sé si es adecuado, pero, cada vez me haces sentir más seguro, más querido, cada día despierto con esa sensación de agradecimiento hacia Dios por poder permitirme conocerte." },
+      { img: "img/foto17.jpg", txt: "Ojalá puedas sentirte igual, no solo querida, sino en algún punto, amada, protegida (en el buen sentido), que te puedas sentir segura conmigo y que sepas que yo estaré ahí para tí." },
+      { img: "img/foto18.jpg", txt: "Sé que no es lo mismo en persona a un videojuego, pero, me gusta estar contigo sea donde sea, como en nuestro mundo de Minecraft." },
+      { img: "img/foto19.jpg", txt: "Felicidades... Felicidades por otra vuelta más al sol, te quiero mucho, y quiero que sepas que, si cada día me dieran a elegir si estar contigo o no, siempre elegiría que si. En algún punto habrán diferencias entre nosotros, pero aún con todo eso, te puedo afirmar que tu fuiste, eres y serás siempre no solo mi primera opción, sino la única, no porque no pueda, sino porque yo así lo he decidido. Te quiero mucho lenita, te quiero mucho... Mi pequeña princesa." }
+    ];
+
+    let indiceActual = 0;
+    let animandoFoto = false; 
+    
+    const imgElement = document.getElementById('imagen-activa');
+    const imgContainer = document.getElementById('foto-activa-container');
+    const txtElement = document.getElementById('texto-activo');
+    const txtContainer = document.getElementById('tarjeta-texto');
+    const contador = document.getElementById('contador-fotos');
+    const btnAtras = document.getElementById('btn-atras');
+    const btnAdelante = document.getElementById('btn-adelante');
+    const btnVerFinal = document.getElementById('btn-ver-final');
+
+    function cargarContenido() {
+      const data = miHistoria[indiceActual];
+      imgElement.src = data.img;
+      txtElement.innerHTML = data.txt;
+      contador.innerText = (indiceActual + 1) + " / " + miHistoria.length;
+
+      if (indiceActual === 0) {
+        btnAtras.classList.add('oculto');
+      } else {
+        btnAtras.classList.remove('oculto');
+      }
+      
+      if (indiceActual === miHistoria.length - 1) {
+        btnAdelante.classList.add('oculto');
+        btnVerFinal.classList.add('mostrar');
+      } else {
+        btnAdelante.classList.remove('oculto');
+        btnVerFinal.classList.remove('mostrar');
+      }
+    }
+
+    function cambiarFoto(direccion) {
+      if (animandoFoto) return;
+      if (indiceActual + direccion < 0 || indiceActual + direccion >= miHistoria.length) return;
+
+      animandoFoto = true;
+      imgContainer.classList.add('oculto');
+      txtContainer.classList.add('oculto');
+      
+      setTimeout(() => {
+        indiceActual += direccion;
+        cargarContenido();
+        imgContainer.classList.remove('oculto');
+        txtContainer.classList.remove('oculto');
+        
+        setTimeout(() => { animandoFoto = false; }, 500); 
+      }, 400); 
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('galeria-container').classList.contains('visible') && document.getElementById('gran-final-container').style.display !== 'block') {
+        if (e.key === 'ArrowLeft' && indiceActual > 0) cambiarFoto(-1);
+        if ((e.key === 'ArrowRight' || e.key === ' ') && indiceActual < miHistoria.length - 1) cambiarFoto(1);
+      }
+    });
+
+    let fuegosActivos = false;
+    const coloresFuego = ['#ffd500', '#fdc500', '#00509d', '#003f88', '#ffffff', '#ff9f1c'];
+    
+    function crearFuegoArtificial() {
+      const cielo = document.getElementById('cielo-fuegos');
+      const x = Math.random() * 80 + 10; 
+      const y = Math.random() * 40 + 5;  
+      
+      let destello = document.createElement('div');
+      destello.className = 'fuego-destello';
+      destello.style.left = x + 'vw';
+      destello.style.top = y + 'vh';
+      cielo.appendChild(destello);
+      setTimeout(() => destello.remove(), 300);
+
+      const particulas = 40; 
+      const colorElegido = coloresFuego[Math.floor(Math.random() * coloresFuego.length)];
+
+      for(let i=0; i<particulas; i++) {
+        let p = document.createElement('div');
+        p.className = 'fuego-particula';
+        p.style.left = x + 'vw'; p.style.top = y + 'vh';
+        p.style.backgroundColor = colorElegido;
+        p.style.boxShadow = `0 0 10px ${colorElegido}, 0 0 20px ${colorElegido}`;
+        
+        const size = Math.random() * 5 + 3;
+        p.style.width = size + 'px'; p.style.height = size + 'px';
+        
+        const angle = Math.random() * Math.PI * 2;
+        const distancia = Math.random() * 150 + 80;
+        
+        p.style.setProperty('--tx', (Math.cos(angle) * distancia) + 'px');
+        p.style.setProperty('--ty', (Math.sin(angle) * distancia) + 'px');
+        
+        cielo.appendChild(p);
+        setTimeout(() => p.remove(), 1500);
+      }
+    }
+
+    function loopFuegos() {
+      if(!fuegosActivos) return;
+      crearFuegoArtificial();
+      setTimeout(loopFuegos, Math.random() * 600 + 300); 
+    }
+
+    function construirRamo() {
+      const ramo = document.getElementById('ramo-esquina');
+      let jarron = document.createElement('div');
+      jarron.className = 'jarron-cristal';
+      ramo.appendChild(jarron);
+
+      const angulosHojas = [-50, -20, 10, 40];
+      angulosHojas.forEach((ang, idx) => {
+        let hoja = document.createElement('div');
+        hoja.className = 'hoja-ramo';
+        setTimeout(() => {
+          hoja.style.opacity = '1';
+          hoja.style.transform = `rotate(${ang}deg) scale(1.2)`;
+        }, 3200 + (idx * 200)); 
+        ramo.appendChild(hoja);
+      });
+
+      const capas = [
+        {x: 0, y: -40, delay: 3600},
+        {x: -45, y: -10, delay: 3900},
+        {x: 45, y: -10, delay: 4200},
+        {x: -25, y: 30, delay: 4500},
+        {x: 25, y: 30, delay: 4800}
+      ];
+
+      capas.forEach(capa => {
+        let cluster = document.createElement('div');
+        cluster.className = 'cluster-ramo';
+        cluster.style.transform = `translate(${capa.x}px, ${capa.y}px) scale(0)`;
+        cluster.style.transition = `transform 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${capa.delay}ms`;
+
+        for(let f=0; f<45; f++) {
+          let flor = document.createElement('div');
+          flor.className = 'flor-azul-ramo';
+          let r = Math.sqrt(Math.random()) * 40; 
+          let theta = Math.random() * 2 * Math.PI;
+          flor.style.left = `calc(50% + ${r * Math.cos(theta)}px)`;
+          flor.style.top = `calc(50% + ${r * Math.sin(theta)}px)`;
+          if(Math.random() > 0.4) flor.style.background = '#74b4e0';
+          if(Math.random() > 0.7) flor.style.background = '#e6f2ff';
+          cluster.appendChild(flor);
+        }
+        ramo.appendChild(cluster);
+        setTimeout(() => { cluster.style.transform = `translate(${capa.x}px, ${capa.y}px) scale(1)`; }, 100);
+      });
+      setTimeout(() => { jarron.style.opacity = '1'; }, 3000);
+    }
+
+    function iniciarGranFinal() {
+      document.getElementById('zona-izq').style.pointerEvents = 'none';
+      document.getElementById('zona-der').style.pointerEvents = 'none';
+
+      const galeria = document.getElementById('galeria-container');
+      const finalContainer = document.getElementById('gran-final-container');
+      const jardin = document.getElementById('jardin-enredaderas');
+      const tarjetaF = document.getElementById('tarjeta-final-ancha');
+
+      galeria.style.opacity = '0';
+      galeria.style.transform = 'scale(0.9)';
+      setTimeout(() => galeria.style.display = 'none', 1500);
+
+      setTimeout(() => {
+        finalContainer.style.display = 'block';
+        
+        const numEnredaderas = window.innerWidth > 800 ? 6 : 4;
+        const ramas = Array.from({length: numEnredaderas}, () => []);
+        miHistoria.forEach((item, index) => { ramas[index % numEnredaderas].push(item); });
+
+        ramas.forEach((fotosEnRama, indexRama) => {
+          let enredaderaDOM = document.createElement('div');
+          enredaderaDOM.className = 'enredadera';
+          
+          fotosEnRama.forEach((fotoData, indexFoto) => {
+            let marco = document.createElement('div');
+            marco.className = 'marco-colgado';
+            marco.innerHTML = `<img src="${fotoData.img}" alt="Recuerdo">`;
+            
+            let tiempoAparicion = (indexRama * 0.3) + (indexFoto * 0.4) + 1;
+            
+            setTimeout(() => {
+              marco.classList.add('aparecer');
+              setTimeout(() => {
+                marco.style.animationDelay = (Math.random() * 2) + 's';
+                marco.classList.add('balanceo');
+              }, 800);
+            }, tiempoAparicion * 1000);
+            
+            enredaderaDOM.appendChild(marco);
+          });
+          
+          jardin.appendChild(enredaderaDOM);
+          setTimeout(() => { enredaderaDOM.style.height = '100%'; }, 100);
+        });
+
+        construirRamo();
+
+        setTimeout(() => {
+          tarjetaF.classList.add('subir');
+          setTimeout(() => {
+            fuegosActivos = true;
+            loopFuegos(); 
+          }, 1000);
+        }, 4500); 
+
+      }, 1500);
+    }
+
+    window.onload = () => { cargarContenido(); };
+  </script>
+</body>
+</html>

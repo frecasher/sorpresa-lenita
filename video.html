@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Un mensaje para ti</title>
+  <style>
+    /* --- PALETA DE COLORES --- */
+    :root {
+      --azul-profundo: #092147;
+      --azul-medio: #133875;
+      --azul-claro: #2A5A9E;
+      --dorado: #F5C928;
+      --verde-tallo: #4A6B41;
+      --verde-hoja: #638C58;
+      --butaca-clara: #1E50A0;
+      --butaca-oscura: #061530;
+      --negro-techo: #0a0a0c;
+    }
+
+    /* El body ahora tiene el mismo color de fondo claro de la portada para una transición invisible */
+    body {
+      margin: 0; overflow: hidden; font-family: 'Georgia', serif;
+      background: var(--fondo-claro); user-select: none;
+    }
+
+    /* =========================================
+       TRANSICIÓN GLOBAL (CORTINA NEGRA)
+       ========================================= */
+    #cortina-negra {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #000; z-index: 9999; 
+      opacity: 0; /* Inicia transparente para no estorbar la entrada suave */
+      pointer-events: none;
+      transition: opacity 1.5s ease-in-out;
+    }
+
+    /* =========================================
+       FASE 1: TEXTOS, MARCO Y ENREDADERAS
+       ========================================= */
+    #fase-textos {
+      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: linear-gradient(120deg, #F7FAFF, #eef4fc, #fffdf5); background-size: 200% 200%;
+      /* Entra suavemente desde la luz */
+      animation: gradienteFondo 15s ease infinite alternate, aparecerPantalla 2.5s ease-in-out forwards;
+      opacity: 0; 
+      display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
+    }
+    @keyframes aparecerPantalla { to { opacity: 1; } }
+    @keyframes gradienteFondo { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+
+    /* Fondo, luces y luciérnagas */
+    .luz-fondo { position: absolute; border-radius: 50%; filter: blur(90px); z-index: 1; pointer-events: none; }
+    .luz-1 { width: 45vw; height: 45vw; background: #75A9E8; top: -10%; left: -10%; opacity: 0.15; animation: flotarLuz 12s infinite alternate ease-in-out; }
+    .luz-2 { width: 35vw; height: 35vw; background: var(--dorado); bottom: -10%; right: -5%; opacity: 0.1; animation: flotarLuz 15s infinite alternate-reverse ease-in-out; }
+    @keyframes flotarLuz { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, -30px) scale(1.1); } }
+
+    .sombra-naturaleza { position: absolute; background: #001233; opacity: 0.03; filter: blur(25px); z-index: 2; pointer-events: none; border-radius: 50% 10% 50% 10%; }
+    .sombra-1 { width: 300px; height: 400px; top: -50px; left: 10%; animation: mecerSombra 8s infinite alternate ease-in-out; }
+    .sombra-2 { width: 400px; height: 300px; bottom: -50px; right: 15%; border-radius: 10% 50% 10% 50%; animation: mecerSombra 10s infinite alternate-reverse ease-in-out; }
+    @keyframes mecerSombra { 0% { transform: rotate(-3deg) translate(0, 0); } 100% { transform: rotate(3deg) translate(15px, 15px); } }
+
+    #capa-luciernagas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 3; pointer-events: none; }
+    .luciernaga {
+      position: absolute; width: 4px; height: 4px; background: var(--dorado); border-radius: 50%;
+      box-shadow: 0 0 10px var(--dorado), 0 0 20px var(--dorado); opacity: 0; animation: flotarLuciernaga var(--dur) ease-in-out forwards;
+    }
+    @keyframes flotarLuciernaga { 0% { transform: translate(0, 0) scale(0.5); opacity: 0; } 20% { opacity: 0.8; } 80% { opacity: 0.8; } 100% { transform: translate(var(--tx), var(--ty)) scale(1.2); opacity: 0; } }
+
+    /* Marco y Enredaderas */
+    #svg-enredaderas-fondo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+    .marco-doble {
+      position: absolute; top: 25px; left: 25px; right: 25px; bottom: 25px;
+      border: 2px solid var(--dorado); border-radius: 8px; pointer-events: none; z-index: 4;
+      animation: respiracionDorada 4s infinite alternate ease-in-out;
+    }
+    .marco-doble::after {
+      content: ''; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px;
+      border: 1px solid rgba(245, 201, 40, 0.5); border-radius: 4px; animation: respiracionDoradaInterior 4s infinite alternate ease-in-out;
+    }
+    #svg-enredaderas-frente { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+
+    @keyframes respiracionDorada { 0% { box-shadow: 0 0 10px rgba(245, 201, 40, 0.2), inset 0 0 10px rgba(245, 201, 40, 0.1); border-color: rgba(245, 201, 40, 0.4); } 100% { box-shadow: 0 0 25px rgba(245, 201, 40, 0.7), inset 0 0 20px rgba(245, 201, 40, 0.4); border-color: rgba(245, 201, 40, 1); } }
+    @keyframes respiracionDoradaInterior { 0% { border-color: rgba(245, 201, 40, 0.2); } 100% { border-color: rgba(245, 201, 40, 0.6); } }
+
+    /* Textos Interactivos */
+    #texto-dinamico { color: #0B3B82; font-size: 2.2rem; font-weight: bold; font-style: italic; text-align: center; max-width: 800px; padding: 0 40px; text-shadow: 0 2px 10px rgba(245, 201, 40, 0.35); opacity: 0; transform: translateY(15px); transition: opacity 1.2s ease, transform 1.2s ease; z-index: 10; }
+    #texto-dinamico.visible { opacity: 1; transform: translateY(0); }
+    .controles-flechas { display: flex; gap: 60px; margin-top: 40px; opacity: 0; transition: opacity 1.5s ease; z-index: 10; }
+    .controles-flechas.visible { opacity: 1; }
+    .flecha { color: var(--dorado); font-size: 3rem; cursor: pointer; text-shadow: 0 2px 10px rgba(245, 201, 40, 0.4); transition: transform 0.4s ease, opacity 0.5s ease, text-shadow 0.4s ease; }
+    .flecha.desactivada { opacity: 0; pointer-events: none; }
+    .flecha-izq:hover { transform: translateX(-10px); text-shadow: 0 2px 15px rgba(245, 201, 40, 0.8); }
+    .flecha-der:hover { transform: translateX(10px); text-shadow: 0 2px 15px rgba(245, 201, 40, 0.8); }
+
+
+    /* =========================================
+       FASE 2: LA SALA DE CINE ARQUITECTÓNICA
+       ========================================= */
+    #fase-cine {
+      position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: radial-gradient(circle at center, #1a1a1e 0%, #000 100%);
+      display: none; z-index: 5; perspective: 1000px; overflow: hidden;
+      transition: background 2s ease;
+    }
+
+    .techo {
+      position: absolute; top: -10vh; left: -20vw; width: 140vw; height: 45vh;
+      background: linear-gradient(to bottom, #111, var(--negro-techo));
+      transform-origin: top; transform: rotateX(75deg); border-bottom: 2px solid #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-evenly;
+      z-index: 1; transition: background 2.5s ease;
+    }
+    .fila-luces-techo { display: flex; justify-content: space-between; width: 100%; padding: 0 20vw; box-sizing: border-box; }
+    .fila-luces-techo.lejana { width: 60%; opacity: 0.5; transform: scale(0.6); }
+    .fila-luces-techo.media { width: 80%; opacity: 0.8; transform: scale(0.8); }
+    .fila-luces-techo.cercana { width: 100%; opacity: 1; transform: scale(1); }
+    .luz-techo {
+      width: 12px; height: 12px; background: #fff; border-radius: 50%;
+      box-shadow: 0 0 15px 5px rgba(245, 201, 40, 0.6), inset 0 0 5px #fff; transition: all 2.5s ease;
+    }
+
+    .pared {
+      position: absolute; top: 0; bottom: 15vh; width: 25vw;
+      background: linear-gradient(to bottom, #151518, #08080a); z-index: 2;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15vh; transition: background 2.5s ease;
+    }
+    .pared-izq { left: -5vw; transform-origin: left; transform: rotateY(55deg); border-right: 10px solid #050505; box-shadow: inset -20px 0 50px rgba(0,0,0,0.8); }
+    .pared-der { right: -5vw; transform-origin: right; transform: rotateY(-55deg); border-left: 10px solid #050505; box-shadow: inset 20px 0 50px rgba(0,0,0,0.8); }
+    .panel-acustico {
+      width: 60%; height: 30vh; border: 2px solid #0a0a0c; border-radius: 4px; background: #0f0f12;
+      display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+    .aplique-luz {
+      width: 6px; height: 8vh; background: #fff; border-radius: 3px;
+      box-shadow: 0 0 30px 15px rgba(245, 201, 40, 0.5), 0 -20px 40px rgba(245, 201, 40, 0.2) inset; transition: all 2.5s ease;
+    }
+
+    .zona-frontal { position: absolute; top: 15vh; left: 20vw; right: 20vw; bottom: 15vh; display: flex; flex-direction: column; align-items: center; z-index: 3; }
+    .glow-pantalla {
+      position: absolute; top: 5%; left: 0; right: 0; bottom: 10%; background: transparent;
+      box-shadow: 0 0 80px 20px rgba(255, 255, 255, 0.05); border-radius: 10px; z-index: 1; transition: box-shadow 2.5s ease;
+    }
+    .marco-pantalla {
+      position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border: 4px solid #111; border-radius: 6px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.8); z-index: 3;
+      display: flex; justify-content: center; align-items: center; overflow: hidden; transition: all 2.5s ease;
+    }
+    .marco-pantalla video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; outline: none; object-fit: cover; }
+    
+    #pantalla-apagada {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #050505; z-index: 2; transition: opacity 1.5s ease; pointer-events: none;
+    }
+    .panel-escenario { 
+      width: 140%; height: 8vh; background: linear-gradient(to bottom, #111, #050506); 
+      margin-top: 3vh; border-top: 2px solid #1a1a1a; border-radius: 50% 50% 0 0 / 15px 15px 0 0; 
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.8); z-index: 2; 
+    }
+
+    .zona-butacas { position: absolute; bottom: -5vh; left: -10vw; width: 120vw; height: 45vh; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; z-index: 10; perspective: 800px; }
+    .fila { display: flex; justify-content: center; align-items: flex-end; width: 100%; margin-top: -12vh; }
+    .fila-1 { transform: scale(0.65) translateY(-60px); filter: brightness(0.4) blur(1px); z-index: 1; }
+    .fila-2 { transform: scale(0.75) translateY(-40px); filter: brightness(0.6); z-index: 2; }
+    .fila-3 { transform: scale(0.85) translateY(-20px); filter: brightness(0.8); z-index: 3; }
+    .fila-4 { transform: scale(1) translateY(0); filter: brightness(1); z-index: 4; }
+
+    .asiento-contenedor { display: flex; align-items: flex-end; }
+    .apoyabrazos { width: 12px; height: 65px; background: linear-gradient(to right, #050505, #111, #050505); border-radius: 6px 6px 0 0; box-shadow: inset 0 2px 5px rgba(255,255,255,0.1), 5px 0 10px rgba(0,0,0,0.5); z-index: 5; margin: 0 -6px; }
+    .butaca { width: clamp(50px, 6vw, 80px); height: 130px; background: linear-gradient(to bottom, var(--azul-claro), var(--azul-medio), var(--azul-profundo)); border-radius: 15px 15px 0 0; position: relative; box-shadow: inset 0 8px 15px rgba(255,255,255,0.15), inset 0 -20px 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: flex-end; transition: filter 2.5s ease; }
+    .butaca::before { content: ''; position: absolute; top: 0; left: 10%; width: 80%; height: 20%; background: radial-gradient(ellipse at top, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+    .cojin-asiento { width: 96%; height: 35%; margin: 0 auto; background: linear-gradient(to bottom, var(--azul-medio), var(--azul-profundo)); border-radius: 8px 8px 0 0; box-shadow: 0 -6px 12px rgba(0,0,0,0.7), inset 0 4px 8px rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.05); }
+    .pasillo { width: 5vw; }
+
+    #btn-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--dorado); color: #092147; padding: 15px 40px; border-radius: 30px; font-size: 1.5rem; font-weight: bold; cursor: pointer; box-shadow: 0 10px 30px rgba(245, 201, 40, 0.4); transition: all 0.3s ease; z-index: 10; }
+    #btn-play:hover { background: #fff; box-shadow: 0 10px 40px rgba(255, 255, 255, 0.8); transform: translate(-50%, -50%) scale(1.05); }
+
+    /* ESTADO "LUCES OFF" (CINE) */
+    #fase-cine.luces-off { background: radial-gradient(circle at center, #050505 0%, #000 100%); }
+    #fase-cine.luces-off .techo { background: linear-gradient(to bottom, #050505, #000); border-bottom: 2px solid #000; }
+    #fase-cine.luces-off .luz-techo { background: #111; box-shadow: none; }
+    #fase-cine.luces-off .pared { background: #020202; }
+    #fase-cine.luces-off .panel-acustico { background: #010101; border-color: #030303; }
+    #fase-cine.luces-off .aplique-luz { background: #111; box-shadow: none; }
+    #fase-cine.luces-off .butaca { filter: brightness(0.15); }
+    #fase-cine.luces-off .apoyabrazos { filter: brightness(0.2); }
+    #fase-cine.luces-off .glow-pantalla { box-shadow: 0 0 150px 40px rgba(180, 210, 255, 0.15), 0 0 300px 80px rgba(117, 169, 232, 0.05); }
+    #fase-cine.luces-off .marco-pantalla { box-shadow: 0 30px 80px rgba(0,0,0,1), 0 0 50px rgba(255,255,255,0.05); border-color: #000; }
+
+    @media (max-width: 768px) {
+      #texto-dinamico { font-size: 1.6rem; padding: 0 20px; } .flecha { font-size: 2.5rem; }
+      .pared { display: none; } .zona-frontal { left: 5vw; right: 5vw; top: 20vh; }
+      .marco-pantalla { aspect-ratio: 16/9; } .zona-butacas { bottom: 0; } .pasillo { width: 2vw; } .fila-1 { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CORTINA NEGRA DE TRANSICIÓN DE SALIDA (A FLOWER.HTML) -->
+  <div id="cortina-negra"></div>
+
+  <!-- FASE 1: TEXTOS Y ENREDADERAS -->
+  <div id="fase-textos">
+    <div class="luz-fondo luz-1"></div>
+    <div class="luz-fondo luz-2"></div>
+    <div class="sombra-naturaleza sombra-1"></div>
+    <div class="sombra-naturaleza sombra-2"></div>
+    <div id="capa-luciernagas"></div>
+
+    <svg id="svg-enredaderas-fondo"></svg>
+    <div class="marco-doble"></div>
+    <svg id="svg-enredaderas-frente"></svg>
+
+    <div id="texto-dinamico"></div>
+    <div class="controles-flechas" id="controles-flechas">
+      <div id="btn-atras" class="flecha flecha-izq">&#8592;</div>
+      <div id="btn-adelante" class="flecha flecha-der">&#8594;</div>
+    </div>
+  </div>
+
+  <!-- FASE 2: SALA DE CINE -->
+  <div id="fase-cine">
+    <div class="techo">
+      <div class="fila-luces-techo lejana"><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div></div>
+      <div class="fila-luces-techo media"><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div></div>
+      <div class="fila-luces-techo cercana"><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div><div class="luz-techo"></div></div>
+    </div>
+    
+    <div class="pared pared-izq"><div class="panel-acustico"><div class="aplique-luz"></div></div><div class="panel-acustico"><div class="aplique-luz"></div></div></div>
+    <div class="pared pared-der"><div class="panel-acustico"><div class="aplique-luz"></div></div><div class="panel-acustico"><div class="aplique-luz"></div></div></div>
+
+    <div class="zona-frontal">
+      <div class="glow-pantalla"></div>
+      <div class="marco-pantalla">
+        <video id="video-cine" preload="metadata" playsinline>
+          <source src="video.mp4" type="video/mp4">
+        </video>
+        <div id="pantalla-apagada"></div>
+        <div id="btn-play">▶ Reproducir</div>
+      </div>
+      <div class="panel-escenario"></div>
+    </div>
+
+    <div class="zona-butacas" id="zona-butacas"></div>
+  </div>
+
+  <script>
+    const cortinaNegra = document.getElementById('cortina-negra');
+
+    window.addEventListener('load', () => {
+      crearNaturaleza();
+      crearButacasCine();
+      requestAnimationFrame(animarNaturaleza);
+      
+      // La entrada es directa y luminosa, sin cortina negra inicial.
+      setTimeout(() => { cambiarTexto(0, true); }, 1500); 
+    });
+
+    // ==========================================
+    // FASE 1: MAGIA, TEXTOS Y ENREDADERAS
+    // ==========================================
+    const capaLuciernagas = document.getElementById('capa-luciernagas');
+    let intervaloLuciernagas = setInterval(() => {
+      const luciernaga = document.createElement('div'); luciernaga.className = 'luciernaga';
+      luciernaga.style.left = Math.random() * 90 + 5 + 'vw'; luciernaga.style.top = Math.random() * 50 + 50 + 'vh'; 
+      luciernaga.style.setProperty('--tx', (Math.random() - 0.5) * 200 + 'px');
+      luciernaga.style.setProperty('--ty', -(Math.random() * 400 + 200) + 'px'); 
+      luciernaga.style.setProperty('--dur', (Math.random() * 4 + 6) + 's');
+      capaLuciernagas.appendChild(luciernaga); setTimeout(() => luciernaga.remove(), 10000);
+    }, 1200);
+
+    const svgFondo = document.getElementById('svg-enredaderas-fondo');
+    const svgFrente = document.getElementById('svg-enredaderas-frente');
+    const animatedLeaves = []; const animatedFlowers = []; let requestID;
+
+    function crearNaturaleza() {
+      svgFondo.innerHTML = ''; svgFrente.innerHTML = '';
+      animatedLeaves.length = 0; animatedFlowers.length = 0;
+      const w = window.innerWidth; const h = window.innerHeight; const m = 25; 
+
+      const ptsTL = []; for(let y = h*0.5; y >= m; y -= 5) ptsTL.push({x: m, y: y}); for(let x = m + 5; x <= w*0.5; x += 5) ptsTL.push({x: x, y: m});
+      const ptsBR = []; for(let y = h*0.5; y <= h-m; y += 5) ptsBR.push({x: w-m, y: y}); for(let x = w-m-5; x >= w*0.5; x -= 5) ptsBR.push({x: x, y: h-m});
+
+      function crearEnredadera(pts, groupElement, amplitude, frequency, phase, width, color) {
+        let d = "";
+        for (let i = 0; i < pts.length; i++) {
+          const p1 = pts[i]; let nx = 1, ny = 0;
+          if (i < pts.length - 1) { let dx = pts[i+1].x - p1.x; let dy = pts[i+1].y - p1.y; let dist = Math.hypot(dx, dy); if (dist > 0) { nx = -dy/dist; ny = dx/dist; } } 
+          else if (i > 0) { let dx = p1.x - pts[i-1].x; let dy = p1.y - pts[i-1].y; let dist = Math.hypot(dx, dy); if (dist > 0) { nx = -dy/dist; ny = dx/dist; } }
+          let fade = 1; if (i < 15) fade = i / 15; if (i > pts.length - 15) fade = (pts.length - i) / 15;
+          const wave = Math.sin(i * frequency + phase) * amplitude * fade;
+          d += (i === 0 ? `M ${p1.x + nx * wave},${p1.y + ny * wave} ` : `L ${p1.x + nx * wave},${p1.y + ny * wave} `);
+        }
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d); path.setAttribute('fill', 'none'); path.setAttribute('stroke', color); path.setAttribute('stroke-width', width); path.setAttribute('stroke-linecap', 'round');
+        groupElement.appendChild(path);
+      }
+
+      function decorarTallo(pts, groupElement, numLeaves) {
+        const step = Math.max(1, Math.floor(pts.length / numLeaves));
+        for (let i = 10; i < pts.length - 10; i += step) {
+          let idx = i + Math.floor(Math.random() * 4 - 2); if (idx < 1 || idx >= pts.length - 1) continue;
+          const pt = pts[idx]; const angle = Math.atan2(pts[idx+1].y - pt.y, pts[idx+1].x - pt.x) * 180 / Math.PI;
+          const isBud = Math.random() > 0.85; const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          if (isBud) { el.setAttribute('d', 'M0,0 Q5,-5 10,0 Q5,5 0,0'); el.setAttribute('fill', '#8AB6F0'); } 
+          else { el.setAttribute('d', 'M0,0 Q12,-15 25,-5 Q15,10 0,0'); el.setAttribute('fill', Math.random() > 0.5 ? 'var(--verde-hoja)' : '#4A6B41'); }
+          const rot = angle + ((Math.random() > 0.5 ? 1 : -1) * (30 + Math.random() * 40));
+          const scale = isBud ? 0.8 : (0.5 + Math.random() * 0.7);
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('transform', `translate(${pt.x}, ${pt.y})`);
+          const innerG = document.createElementNS('http://www.w3.org/2000/svg', 'g'); innerG.dataset.baseRot = rot; innerG.dataset.scale = scale; innerG.dataset.phase = Math.random() * 100;
+          innerG.setAttribute('transform', `rotate(${rot}) scale(${scale})`);
+          innerG.appendChild(el); g.appendChild(innerG); groupElement.appendChild(g); animatedLeaves.push(innerG);
+        }
+      }
+
+      function colocarFlores(pts, groupElement) {
+        const spots = [Math.floor(pts.length * 0.25), Math.floor(pts.length * 0.5), Math.floor(pts.length * 0.75)];
+        spots.forEach(spot => {
+          if (Math.random() > 0.8) return; 
+          const idx = spot + Math.floor(Math.random() * 10 - 5); if (idx < 0 || idx >= pts.length) return;
+          const pt = pts[idx]; const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); const offset = (Math.random() - 0.5) * 20;
+          g.setAttribute('transform', `translate(${pt.x + offset}, ${pt.y + offset})`);
+          const innerG = document.createElementNS('http://www.w3.org/2000/svg', 'g'); innerG.dataset.phase = Math.random() * 100; const scale = 0.8 + Math.random() * 0.3; innerG.dataset.scale = scale;
+          innerG.setAttribute('transform', `scale(${scale})`);
+          for(let i=0; i<8; i++) {
+            const fx = (Math.random() - 0.5) * 25; const fy = (Math.random() - 0.5) * 25; const color = Math.random() > 0.5 ? 'var(--azul-claro)' : '#5C93E6';
+            const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', 'M0,0 C5,-10 10,-5 5,0 C10,5 5,10 0,0 C-5,10 -10,5 -5,0 C-10,-5 -5,-10 0,0');
+            p.setAttribute('fill', color); p.setAttribute('transform', `translate(${fx}, ${fy}) rotate(${Math.random()*360}) scale(${0.4 + Math.random()*0.4})`); innerG.appendChild(p);
+            const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); center.setAttribute('cx', fx); center.setAttribute('cy', fy); center.setAttribute('r', 1.8); center.setAttribute('fill', 'var(--dorado)'); innerG.appendChild(center);
+          }
+          g.appendChild(innerG); groupElement.appendChild(g); animatedFlowers.push(innerG);
+        });
+      }
+
+      const groupTL_Back = document.createElementNS('http://www.w3.org/2000/svg', 'g'); 
+      const groupBR_Back = document.createElementNS('http://www.w3.org/2000/svg', 'g'); 
+      const groupTL_Front = document.createElementNS('http://www.w3.org/2000/svg', 'g'); 
+      const groupBR_Front = document.createElementNS('http://www.w3.org/2000/svg', 'g'); 
+
+      crearEnredadera(ptsTL, groupTL_Back, -12, 0.1, Math.PI/2, 4, '#3A5B31'); crearEnredadera(ptsBR, groupBR_Back, -12, 0.1, Math.PI/2, 4, '#3A5B31');
+      crearEnredadera(ptsTL, groupTL_Front, 14, 0.15, 0, 4, 'var(--verde-tallo)'); crearEnredadera(ptsTL, groupTL_Front, 8, 0.2, Math.PI, 2.5, 'var(--verde-hoja)'); decorarTallo(ptsTL, groupTL_Front, 25); colocarFlores(ptsTL, groupTL_Front);
+      crearEnredadera(ptsBR, groupBR_Front, 14, 0.15, 0, 4, 'var(--verde-tallo)'); crearEnredadera(ptsBR, groupBR_Front, 8, 0.2, Math.PI, 2.5, 'var(--verde-hoja)'); decorarTallo(ptsBR, groupBR_Front, 25); colocarFlores(ptsBR, groupBR_Front);
+
+      svgFondo.appendChild(groupTL_Back); svgFondo.appendChild(groupBR_Back); svgFrente.appendChild(groupTL_Front); svgFrente.appendChild(groupBR_Front);
+    }
+
+    function animarNaturaleza(time) {
+      animatedLeaves.forEach(item => { const currentRot = parseFloat(item.dataset.baseRot) + Math.sin((time * 0.001) + parseFloat(item.dataset.phase)) * 3; item.setAttribute('transform', `rotate(${currentRot}) scale(${parseFloat(item.dataset.scale)})`); });
+      animatedFlowers.forEach(item => { const scaleOffset = Math.sin((time * 0.0008) + parseFloat(item.dataset.phase)) * 0.04; item.setAttribute('transform', `scale(${parseFloat(item.dataset.scale) + scaleOffset})`); });
+      requestID = requestAnimationFrame(animarNaturaleza);
+    }
+
+    const textos = [
+      "Hola antes de que veas lo demás...",
+      "Me gustaría que veas este pequeño video que preparé para ti.",
+      "Quiero explicarte un poco sobre como prepare todo esto.",
+      "El collar, el porque elegí esta temática, la carta física...",
+      "Espero que te guste mucho. ¡Disfrútalo!"
+    ];
+
+    let indiceActual = 0; let faseVideoActiva = false; let enTransicion = false; 
+    const elementoTexto = document.getElementById('texto-dinamico');
+    const controlesFlechas = document.getElementById('controles-flechas');
+    const btnAtras = document.getElementById('btn-atras');
+    const faseTextos = document.getElementById('fase-textos');
+    const faseCine = document.getElementById('fase-cine');
+
+    window.addEventListener('resize', () => { if (!faseVideoActiva) crearNaturaleza(); });
+
+    function cambiarTexto(direccion, esInicio = false) {
+      if (enTransicion || faseVideoActiva) return;
+      
+      if (direccion === 1 && indiceActual === textos.length - 1) { transicionHaciaElCine(); return; }
+      if (direccion === -1 && indiceActual === 0) return;
+
+      enTransicion = true; indiceActual += direccion;
+
+      if (!esInicio) { elementoTexto.classList.remove('visible'); controlesFlechas.classList.remove('visible'); }
+
+      setTimeout(() => {
+        elementoTexto.innerText = textos[indiceActual];
+        if (indiceActual === 0) btnAtras.classList.add('desactivada'); else btnAtras.classList.remove('desactivada');
+        elementoTexto.classList.add('visible');
+        setTimeout(() => { controlesFlechas.classList.add('visible'); enTransicion = false; }, 600);
+      }, esInicio ? 0 : 1000);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (faseVideoActiva || enTransicion || e.target.closest('#controles-flechas') || e.target.closest('#btn-play')) return;
+      if (e.clientX < window.innerWidth / 2) cambiarTexto(-1); else cambiarTexto(1);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (faseVideoActiva || enTransicion) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') cambiarTexto(1); else if (e.key === 'ArrowLeft') cambiarTexto(-1);
+    });
+
+    // ==========================================
+    // TRANSICIONES Y LÓGICA DE LA SALA DE CINE
+    // ==========================================
+    const video = document.getElementById('video-cine');
+    const btnPlay = document.getElementById('btn-play');
+    const pantallaApagada = document.getElementById('pantalla-apagada');
+
+    function crearButacasCine() {
+      const zonaButacas = document.getElementById('zona-butacas');
+      const filasConfig = [ { id: 'fila-1', bloques: [5, 6, 5] }, { id: 'fila-2', bloques: [5, 7, 5] }, { id: 'fila-3', bloques: [6, 8, 6] }, { id: 'fila-4', bloques: [6, 9, 6] } ];
+      filasConfig.forEach(config => {
+        const fila = document.createElement('div'); fila.className = `fila ${config.id}`;
+        config.bloques.forEach((numAsientos, index) => {
+          for(let i=0; i<numAsientos; i++) {
+            const wrap = document.createElement('div'); wrapperClass = 'asiento-contenedor'; wrap.className = wrapperClass;
+            const br = document.createElement('div'); br.className = 'apoyabrazos';
+            const bt = document.createElement('div'); bt.className = 'butaca';
+            const cj = document.createElement('div'); cj.className = 'cojin-asiento';
+            bt.appendChild(cj); wrap.appendChild(br); wrap.appendChild(bt); fila.appendChild(wrap);
+          }
+          const brazoFinal = document.createElement('div'); brazoFinal.className = 'apoyabrazos'; fila.appendChild(brazoFinal);
+          if (index < config.bloques.length - 1) { const pasillo = document.createElement('div'); pasillo.className = 'pasillo'; fila.appendChild(pasillo); }
+        });
+        zonaButacas.appendChild(fila);
+      });
+    }
+
+    function transicionHaciaElCine() {
+      faseVideoActiva = true; enTransicion = true;
+      cortinaNegra.style.opacity = '1';
+
+      setTimeout(() => {
+        clearInterval(intervaloLuciernagas); 
+        cancelAnimationFrame(requestID); 
+        faseTextos.style.display = 'none'; 
+        faseCine.style.display = 'block';
+
+        setTimeout(() => { cortinaNegra.style.opacity = '0'; enTransicion = false; }, 500);
+      }, 1500); 
+    }
+
+    btnPlay.addEventListener('click', () => {
+      faseCine.classList.add('luces-off');
+      btnPlay.style.opacity = '0'; btnPlay.style.pointerEvents = 'none';
+      pantallaApagada.style.opacity = '0'; 
+
+      setTimeout(() => { 
+        video.setAttribute('controls', 'true'); 
+        video.play(); 
+      }, 1500);
+    });
+
+    video.addEventListener('pause', () => { if (!video.ended) faseCine.classList.remove('luces-off'); });
+    video.addEventListener('play', () => { faseCine.classList.add('luces-off'); });
+
+    // Salida hacia la interactividad de la Hortensia
+    video.addEventListener('ended', () => {
+      faseCine.classList.remove('luces-off'); 
+      setTimeout(() => {
+        cortinaNegra.style.opacity = '1';
+        setTimeout(() => { window.location.href = 'flower.html'; }, 1500);
+      }, 2000); 
+    });
+  </script>
+</body>
+</html>
